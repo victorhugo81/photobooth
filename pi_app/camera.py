@@ -120,12 +120,15 @@ class Camera:
     def capture_photo(self, filepath: str) -> None:
         """Save a full-resolution still to *filepath* (JPEG)."""
         if self._picam is not None:
-            self._picam.capture_file(filepath)
+            # Switch to the camera's native still resolution (full sensor),
+            # capture, then automatically switch back to the video stream.
+            still_config = self._picam.create_still_configuration()
+            self._picam.switch_mode_and_capture_file(still_config, filepath)
             return
         elif self._cap is not None:
             ret, frame = self._cap.read()
             if ret:
-                cv2.imwrite(filepath, frame)
+                cv2.imwrite(filepath, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
                 return
             # fall through to PIL save
         img = self._test_pattern(add_timestamp=True)
