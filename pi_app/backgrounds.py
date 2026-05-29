@@ -124,6 +124,62 @@ def _get_rembg_session():
     return _rembg_session
 
 
+def get_dominant_color(bg_id: str) -> tuple[int, int, int] | None:
+    """Extract the most visually prominent non-neutral color from a background."""
+    path = _find_background(bg_id)
+    if path is None:
+        return None
+
+    img = Image.open(path).convert("RGB").resize((150, 150), Image.LANCZOS)
+    q = img.quantize(colors=8, method=Image.Quantize.FASTOCTREE)
+    palette = q.getpalette()
+
+    from collections import Counter
+    counts = Counter(q.getdata())
+
+    for idx, _ in sorted(counts.items(), key=lambda x: -x[1]):
+        r, g, b = palette[idx * 3], palette[idx * 3 + 1], palette[idx * 3 + 2]
+        brightness = (r + g + b) / 3
+        saturation = max(r, g, b) - min(r, g, b)
+        # Skip near-black, near-white, and near-gray — prefer vivid colours
+        if 20 < brightness < 235 and saturation > 20:
+            return (r, g, b)
+
+    # Fallback: most common color regardless of neutrality
+    idx = counts.most_common(1)[0][0]
+    return (palette[idx * 3], palette[idx * 3 + 1], palette[idx * 3 + 2])
+
+
+def delete_background(bg_id: str) -> bool:
+    """Delete a background file. Returns True if deleted, False if not found."""
+    path = _find_background(bg_id)
+    if path is None:
+        return False
+    path.unlink()
+    return True
+
+
+def save_background(stream, filename: str) -> dict:
+    """Save an uploaded image as a JPEG background. Returns the new background dict."""
+    BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
+
+    img = Image.open(stream).convert("RGB")
+
+    # Cap dimensions to avoid enormous files
+    MAX_DIM = 2000
+    if img.width > MAX_DIM or img.height > MAX_DIM:
+        img.thumbnail((MAX_DIM, MAX_DIM), Image.LANCZOS)
+
+    out_path = BACKGROUNDS_DIR / f"{filename}.jpg"
+    img.save(out_path, "JPEG", quality=90)
+
+    return {
+        "id": filename,
+        "name": filename.replace("_", " ").title(),
+        "preview": f"/static/backgrounds/{filename}.jpg",
+    }
+
+
 def _find_background(background_id: str) -> Path | None:
     for ext in ("jpg", "jpeg", "png"):
         p = BACKGROUNDS_DIR / f"{background_id}.{ext}"

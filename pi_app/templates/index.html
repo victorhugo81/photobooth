@@ -4,256 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Photobooth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    :root {
-      --accent: #6c63ff;
-    }
-    body {
-      background: #12121e;
-      color: #e8e8f0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    #video-feed {
-      width: 100%;
-      max-height: 65vh;
-      object-fit: contain;
-      border-radius: 12px;
-      border: 2px solid #2d2d50;
-      background: #1a1a30;
-      display: block;
-    }
-    #capture-btn {
-      font-size: 1.25rem;
-      padding: 0.7rem 2.5rem;
-      background: var(--accent);
-      border: none;
-      border-radius: 50px;
-      letter-spacing: 0.04em;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-    #capture-btn:not(:disabled):hover {
-      transform: scale(1.04);
-      box-shadow: 0 0 24px rgba(108, 99, 255, 0.5);
-    }
-    #capture-btn:disabled {
-      opacity: 0.5;
-    }
-
-    /* ── Shared picker styles ── */
-    .picker-grid {
-      display: flex;
-      gap: 0.75rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .picker-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: 3px solid transparent;
-      border-radius: 12px;
-      padding: 8px;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.15s;
-      color: #aaa;
-      font-size: 0.72rem;
-      font-weight: 600;
-    }
-    .picker-btn:hover  { border-color: rgba(108,99,255,0.4); color: #ddd; }
-    .picker-btn.active { border-color: var(--accent); color: #fff; transform: scale(1.08); }
-
-    /* ── Background picker ── */
-    .bg-thumb {
-      width: 80px;
-      height: 55px;
-      border-radius: 8px;
-      object-fit: cover;
-      display: block;
-    }
-    .bg-thumb-none {
-      width: 80px;
-      height: 55px;
-      border-radius: 8px;
-      background: repeating-linear-gradient(
-        45deg,
-        #2d2d50,
-        #2d2d50 5px,
-        #1a1a30 5px,
-        #1a1a30 10px
-      );
-      border: 2px dashed #444;
-    }
-
-    /* ── Theme picker ── */
-    .theme-swatch {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-    }
-
-    /* ── Divider between sections ── */
-    .picker-divider {
-      border-top: 1px solid #2d2d50;
-      margin: 0.75rem 0;
-    }
-
-    /* ── Live theme preview on the video wrapper ── */
-    #video-wrapper {
-      transition: padding 0.25s ease, background 0.25s ease, filter 0.25s ease;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    #video-wrapper.t-classic {
-      padding: 10px 10px 36px;
-      background: #ffffff;
-    }
-    #video-wrapper.t-birthday {
-      padding: 10px;
-      background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 33%, #6bcb77 66%, #4d96ff 100%);
-    }
-    #video-wrapper.t-vintage {
-      padding: 10px;
-      background: #a08050;
-    }
-    #video-wrapper.t-vintage #video-feed {
-      filter: sepia(0.6) contrast(0.85);
-    }
-
-    /* ── Countdown overlay ── */
-    #countdown-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 10, 20, 0.88);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    #countdown-number {
-      font-size: clamp(8rem, 30vw, 18rem);
-      font-weight: 900;
-      color: #fff;
-      text-shadow: 0 0 60px rgba(108, 99, 255, 0.8);
-      animation: pulse 1s ease-in-out;
-    }
-    @keyframes pulse {
-      0%   { transform: scale(1.3); opacity: 0; }
-      40%  { transform: scale(1);   opacity: 1; }
-      100% { transform: scale(1);   opacity: 1; }
-    }
-
-    /* ── QR overlay ── */
-    #qr-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 10, 20, 0.96);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-      z-index: 1010;
-    }
-    #qr-img {
-      max-width: min(480px, 80vw);
-      border: 6px solid #fff;
-      border-radius: 16px;
-      background: #fff;
-    }
-    #qr-timer {
-      font-size: 1.1rem;
-      color: #aaa;
-    }
-
-    /* ── Removal mode toggle ── */
-    #removal-toggle .btn {
-      font-size: 0.7rem;
-      padding: 2px 10px;
-      border-color: #3d3d60;
-      color: #aaa;
-    }
-    #removal-toggle .btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    #removal-toggle .btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    /* ── Loading spinner ── */
-    #loading-msg {
-      display: none;
-      font-size: 1rem;
-      color: #aaa;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
 
-<div class="container py-4 flex-grow-1">
-  <h1 class="text-center fw-bold mb-4" style="letter-spacing:0.05em;">PHOTOBOOTH</h1>
+<header class="site-header">
+  <div class="film-line"></div>
+  <h1 class="site-title">PHOTOBOOTH</h1>
+  <div class="film-line bottom"></div>
 
+  <div class="header-actions">
+    {% if gallery_url %}
+    <a href="{{ gallery_url }}" target="_blank" rel="noopener">Gallery</a>
+    {% endif %}
+    <a href="/photos">&#128247; Photos</a>
+    <a href="/admin">&#9881; Backgrounds</a>
+  </div>
+</header>
+
+<div class="container pb-5 flex-grow-1">
   <div class="row justify-content-center">
     <div class="col-lg-8">
+
       <div id="video-wrapper">
         <img id="video-feed" src="/video_feed" alt="Live preview">
       </div>
 
       <!-- Background picker -->
-      <div class="mt-3 mb-1">
-        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
-          <span class="small" style="color:#888">Choose a background</span>
-          <!-- Removal mode toggle — hidden until backgrounds load -->
+      <div class="mt-4 mb-1">
+        <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+          <span class="section-label">Background</span>
           <div id="removal-toggle" class="btn-group btn-group-sm" role="group" style="display:none!important">
-            <button type="button" class="btn btn-outline-secondary removal-btn active" data-mode="greenscreen" title="Requires a physical green screen">
-              Green Screen
-            </button>
-            <button type="button" class="btn btn-outline-secondary removal-btn" data-mode="ai" id="ai-btn" title="AI removal — works on any background, slower">
-              AI Remove
-            </button>
+            <button type="button" class="btn btn-outline-secondary removal-btn active" data-mode="greenscreen" title="Requires a physical green screen">Green Screen</button>
+            <button type="button" class="btn btn-outline-secondary removal-btn" data-mode="ai" id="ai-btn" title="AI removal — works on any background, slower">AI Remove</button>
           </div>
         </div>
-        <div id="bg-grid" class="picker-grid">
-          <!-- populated by JS from /backgrounds -->
-        </div>
+        <div id="bg-grid" class="picker-grid"></div>
       </div>
 
-      <div class="picker-divider"></div>
-
-      <!-- Theme / frame picker -->
-      <div class="mb-1">
-        <p class="text-center small mb-2" style="color:#888">Choose a frame</p>
-        <div id="theme-grid" class="picker-grid">
-          <button class="picker-btn theme-btn active" data-theme="none">
-            <div class="theme-swatch" style="background:#6c757d"></div>
-            Original
-          </button>
-          <button class="picker-btn theme-btn" data-theme="classic">
-            <div class="theme-swatch" style="background:#fff;border:2px solid #ddd;box-shadow:inset 0 -14px 0 #fff"></div>
-            Classic
-          </button>
-          <button class="picker-btn theme-btn" data-theme="birthday">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff)"></div>
-            Birthday
-          </button>
-          <button class="picker-btn theme-btn" data-theme="vintage">
-            <div class="theme-swatch" style="background:#a08050"></div>
-            Vintage
-          </button>
-        </div>
-      </div>
-
-      <div class="text-center mt-3">
-        <button id="capture-btn" class="btn btn-primary">
-          Take Photo
-        </button>
+      <div class="text-center mt-4">
+        <button id="capture-btn" class="btn">TAKE PHOTO</button>
       </div>
 
       <div id="loading-msg" class="text-center mt-3">
@@ -262,6 +57,7 @@
       </div>
 
       <div id="error-msg" class="text-center mt-3 text-danger" style="display:none"></div>
+
     </div>
   </div>
 </div>
@@ -273,170 +69,12 @@
 
 <!-- QR overlay -->
 <div id="qr-overlay">
-  <h2 class="fw-semibold">Scan to get your photo!</h2>
+  <h2>Scan to get your photo!</h2>
   <img id="qr-img" src="" alt="QR code">
-  <p id="qr-timer">Returning in 10s&hellip;</p>
-  <button id="qr-close-btn" class="btn btn-outline-light btn-sm">Close now</button>
+  <p id="qr-timer">Returning in 20s&hellip;</p>
+  <button id="qr-close-btn" class="btn btn-outline-secondary btn-sm">Close</button>
 </div>
 
-<script>
-  const captureBtn     = document.getElementById('capture-btn');
-  const countdownEl    = document.getElementById('countdown-overlay');
-  const countdownNum   = document.getElementById('countdown-number');
-  const qrOverlay      = document.getElementById('qr-overlay');
-  const qrImg          = document.getElementById('qr-img');
-  const qrTimer        = document.getElementById('qr-timer');
-  const qrCloseBtn     = document.getElementById('qr-close-btn');
-  const loadingMsg     = document.getElementById('loading-msg');
-  const errorMsg       = document.getElementById('error-msg');
-  const videoWrapper   = document.getElementById('video-wrapper');
-
-  let qrResetInterval  = null;
-  let selectedTheme      = 'none';
-  let selectedBackground = 'none';
-  let removalMode        = 'greenscreen';
-
-  // ── Removal mode toggle ──────────────────────────────────────────────────
-  document.querySelectorAll('.removal-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.removal-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      removalMode = btn.dataset.mode;
-    });
-  });
-
-  // ── Background picker (loaded dynamically) ───────────────────────────────
-  async function loadBackgrounds() {
-    try {
-      const [bgResp, capResp] = await Promise.all([
-        fetch('/backgrounds'),
-        fetch('/capabilities'),
-      ]);
-      const list = await bgResp.json();
-      const caps = await capResp.json();
-      const grid = document.getElementById('bg-grid');
-
-      // Show the removal toggle only when backgrounds are available (more than just "None")
-      if (list.length > 1) {
-        document.getElementById('removal-toggle').style.removeProperty('display');
-      }
-
-      // Disable AI button if rembg isn't installed
-      if (!caps.rembg) {
-        const aiBtn = document.getElementById('ai-btn');
-        aiBtn.disabled = true;
-        aiBtn.title = 'rembg not installed — run: uv add rembg';
-      }
-
-      list.forEach((bg, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'picker-btn' + (i === 0 ? ' active' : '');
-        btn.dataset.bg = bg.id;
-
-        const thumb = bg.preview
-          ? `<img src="${bg.preview}" class="bg-thumb" alt="${bg.name}">`
-          : `<div class="bg-thumb-none"></div>`;
-
-        btn.innerHTML = `${thumb}<span>${bg.name}</span>`;
-        btn.addEventListener('click', () => {
-          grid.querySelectorAll('.picker-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          selectedBackground = bg.id;
-        });
-
-        grid.appendChild(btn);
-      });
-    } catch (e) {
-      console.warn('Could not load backgrounds', e);
-    }
-  }
-
-  loadBackgrounds();
-
-  // ── Theme selection ──────────────────────────────────────────────────────
-  document.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedTheme = btn.dataset.theme;
-
-      // Update live CSS preview
-      videoWrapper.className = selectedTheme === 'none' ? '' : `t-${selectedTheme}`;
-    });
-  });
-
-  captureBtn.addEventListener('click', startCapture);
-  qrCloseBtn.addEventListener('click', resetToPreview);
-
-  async function startCapture() {
-    captureBtn.disabled = true;
-    errorMsg.style.display = 'none';
-
-    // — Countdown 3 → 2 → 1 —
-    countdownEl.style.display = 'flex';
-    for (let i = 3; i >= 1; i--) {
-      countdownNum.textContent = i;
-      // Re-trigger the CSS pulse animation without touching the DOM node
-      countdownNum.style.animation = 'none';
-      countdownNum.offsetHeight;          // force reflow
-      countdownNum.style.animation = '';
-      await sleep(1000);
-    }
-    countdownEl.style.display = 'none';
-
-    // — Trigger capture on server —
-    loadingMsg.style.display = 'block';
-
-    try {
-      const resp = await fetch('/capture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: selectedTheme, background: selectedBackground, removal: removalMode }),
-      });
-      const data = await resp.json();
-      loadingMsg.style.display = 'none';
-
-      if (!resp.ok) {
-        showError(data.error || 'Capture failed — please try again.');
-        return;
-      }
-
-      showQR(data.qr_url);
-    } catch (err) {
-      loadingMsg.style.display = 'none';
-      showError('Network error — please try again.');
-    }
-  }
-
-  function showQR(qrUrl) {
-    qrImg.src = qrUrl + '?t=' + Date.now(); // bust cache
-    qrOverlay.style.display = 'flex';
-
-    let remaining = 10;
-    qrTimer.textContent = `Returning in ${remaining}s…`;
-
-    qrResetInterval = setInterval(() => {
-      remaining--;
-      qrTimer.textContent = `Returning in ${remaining}s…`;
-      if (remaining <= 0) resetToPreview();
-    }, 1000);
-  }
-
-  function resetToPreview() {
-    if (qrResetInterval) { clearInterval(qrResetInterval); qrResetInterval = null; }
-    qrOverlay.style.display = 'none';
-    qrImg.src = '';
-    qrTimer.textContent = 'Returning in 10s…';
-    captureBtn.disabled = false;
-  }
-
-  function showError(msg) {
-    errorMsg.textContent = msg;
-    errorMsg.style.display = 'block';
-    captureBtn.disabled = false;
-  }
-
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-</script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

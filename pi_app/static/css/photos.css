@@ -1,0 +1,48 @@
+/* ── Section heading ── */
+.section-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  color: #333;
+}
+
+/* ── Photo cards ── */
+.photo-card {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.15s;
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+}
+.photo-card:hover {
+  border-color: var(--pink);
+  transform: scale(1.02);
+  box-shadow: 0 0 14px rgba(255, 45, 120, 0.15);
+}
+.photo-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+.photo-card-body {
+  padding: 0.5rem 0.7rem;
+}
+.photo-date {
+  font-size: 0.72rem;
+  color: #444;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Empty state ── */
+#empty-msg {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.1em;
+  color: #222;
+}
+
+/* ── Count badge ── */
+#photo-count { font-size: 0.75rem; color: #333; }

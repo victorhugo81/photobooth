@@ -1,0 +1,118 @@
+/* ── Section heading ── */
+.section-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  color: #333;
+}
+
+/* ── Upload zone ── */
+#upload-zone {
+  border: 2px dashed #222;
+  border-radius: 4px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  background: #080808;
+  transition: border-color 0.2s, background 0.2s;
+}
+#upload-zone.drag-over {
+  border-color: var(--pink);
+  background: rgba(255, 45, 120, 0.04);
+}
+#upload-zone .upload-icon { font-size: 3rem; opacity: 0.3; }
+#upload-zone h5 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  margin-top: 0.75rem;
+  color: #fff;
+}
+#upload-zone p { color: #333; margin: 0.4rem 0 0; font-size: 0.82rem; }
+
+/* ── Background cards ── */
+.bg-card {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.bg-card:hover { border-color: #333; }
+.bg-card img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+.bg-card-body {
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.bg-card-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Delete button ── */
+.btn-del {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  padding: 1px 8px;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  color: #444;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-del:hover { color: var(--pink); border-color: var(--pink); }
+
+/* ── Progress bar ── */
+#upload-progress { display: none; }
+#upload-progress .progress {
+  height: 2px;
+  background: #111;
+  border-radius: 0;
+}
+#upload-progress .progress-bar { background: var(--pink); }
+#progress-label { font-size: 0.8rem; color: #333; }
+
+/* ── Toast ── */
+#toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 2000; }
+.toast-msg {
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 3px;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+  animation: slide-in 0.2s ease;
+}
+.toast-msg.success { border-color: var(--cyan); color: var(--cyan); }
+.toast-msg.error   { border-color: var(--pink); color: var(--pink); }
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#empty-msg {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.1em;
+  color: #222;
+}

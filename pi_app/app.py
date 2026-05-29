@@ -1,17 +1,22 @@
 import datetime
 import logging
 import os
+import re
 import threading
 from pathlib import Path
 
 from dotenv import load_dotenv
 from PIL import Image as PILImage
 from flask import Flask, Response, jsonify, render_template, request
+from werkzeug.utils import secure_filename
 
 from camera import Camera, mjpeg_generator
 from models import Photo, init_db
 from qr_generator import generate_qr
-from backgrounds import apply_background, apply_background_ai, background_list, rembg_available
+from backgrounds import (
+    apply_background, apply_background_ai, background_list,
+    delete_background, get_dominant_color, rembg_available, save_background,
+)
 from themes import apply_theme, theme_list
 from uploader import update_photos_json, upload_photo
 
@@ -54,7 +59,25 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index():
-        return render_template("index.html")
+        gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
+        return render_template("index.html", gallery_url=gallery_url)
+
+    @app.route("/admin")
+    def admin():
+        gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
+        return render_template("admin.html", gallery_url=gallery_url)
+
+    @app.route("/photos")
+    def photos_page():
+        gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
+        share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
+        with _Session() as session:
+            rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(200).all()
+            photos_data = [p.to_dict() for p in rows]
+        return render_template("photos.html",
+                               photos=photos_data,
+                               gallery_url=gallery_url,
+                               share_site_url=share_site_url)
 
     @app.route("/video_feed")
     def video_feed():
@@ -87,6 +110,43 @@ def create_app() -> Flask:
     @app.route("/backgrounds")
     def backgrounds():
         return jsonify(background_list())
+
+    @app.route("/backgrounds/upload", methods=["POST"])
+    def backgrounds_upload():
+        if "file" not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+        f = request.files["file"]
+        if not f.filename:
+            return jsonify({"error": "Empty filename"}), 400
+
+        # Derive a safe, lowercase, slug-style name from the original filename
+        stem = Path(secure_filename(f.filename)).stem
+        slug = re.sub(r"[^a-z0-9]+", "_", stem.lower()).strip("_") or "background"
+
+        try:
+            bg = save_background(f.stream, slug)
+            return jsonify(bg), 201
+        except Exception as exc:
+            logger.exception("Background upload failed")
+            return jsonify({"error": str(exc)}), 500
+
+    @app.route("/backgrounds/<bg_id>", methods=["DELETE"])
+    def backgrounds_delete(bg_id):
+        if not re.match(r"^[a-z0-9_-]+$", bg_id):
+            return jsonify({"error": "Invalid background id"}), 400
+        if delete_background(bg_id):
+            return jsonify({"ok": True})
+        return jsonify({"error": "Not found"}), 404
+
+    @app.route("/backgrounds/<bg_id>/color")
+    def backgrounds_color(bg_id):
+        if not re.match(r"^[a-z0-9_-]+$", bg_id):
+            return jsonify({"error": "Invalid id"}), 400
+        color = get_dominant_color(bg_id)
+        if color is None:
+            return jsonify({"color": None})
+        r, g, b = color
+        return jsonify({"color": f"#{r:02x}{g:02x}{b:02x}", "rgb": [r, g, b]})
 
     @app.route("/capabilities")
     def capabilities():
@@ -129,13 +189,14 @@ def _run_capture(
         composited.save(str(local_path), "JPEG", quality=95)
         logger.info("Applied background '%s' (%s) to %s", background_id, removal_mode, filename)
 
-    # 3. Apply theme frame (compositing via Pillow)
+    # 3. Apply theme frame, matched to the background's dominant colour
     if theme_id != "none":
+        frame_color = get_dominant_color(background_id) if background_id != "none" else None
         raw = PILImage.open(str(local_path))
-        themed = apply_theme(raw, theme_id)
+        themed = apply_theme(raw, theme_id, frame_color=frame_color)
         raw.close()
         themed.save(str(local_path), "JPEG", quality=95)
-        logger.info("Applied theme '%s' to %s", theme_id, filename)
+        logger.info("Applied theme '%s' (frame_color=%s) to %s", theme_id, frame_color, filename)
 
     # 4. Upload to Cloudflare R2
     r2_url = upload_photo(str(local_path), filename)
