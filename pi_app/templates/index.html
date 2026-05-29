@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobooth</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6c63ff;
+    }
+    body {
+      background: #12121e;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #video-feed {
+      width: 100%;
+      max-height: 65vh;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 2px solid #2d2d50;
+      background: #1a1a30;
+      display: block;
+    }
+    #capture-btn {
+      font-size: 1.25rem;
+      padding: 0.7rem 2.5rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 50px;
+      letter-spacing: 0.04em;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    #capture-btn:not(:disabled):hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 24px rgba(108, 99, 255, 0.5);
+    }
+    #capture-btn:disabled {
+      opacity: 0.5;
+    }
+
+    /* ── Countdown overlay ── */
+    #countdown-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 20, 0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #countdown-number {
+      font-size: clamp(8rem, 30vw, 18rem);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 60px rgba(108, 99, 255, 0.8);
+      animation: pulse 1s ease-in-out;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(1.3); opacity: 0; }
+      40%  { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── QR overlay ── */
+    #qr-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 20, 0.96);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      z-index: 1010;
+    }
+    #qr-img {
+      max-width: min(480px, 80vw);
+      border: 6px solid #fff;
+      border-radius: 16px;
+      background: #fff;
+    }
+    #qr-timer {
+      font-size: 1.1rem;
+      color: #aaa;
+    }
+
+    /* ── Loading spinner ── */
+    #loading-msg {
+      display: none;
+      font-size: 1rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container py-4 flex-grow-1">
+  <h1 class="text-center fw-bold mb-4" style="letter-spacing:0.05em;">PHOTOBOOTH</h1>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <img id="video-feed" src="/video_feed" alt="Live preview">
+
+      <div class="text-center mt-4">
+        <button id="capture-btn" class="btn btn-primary">
+          Take Photo
+        </button>
+      </div>
+
+      <div id="loading-msg" class="text-center mt-3">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Uploading&hellip;
+      </div>
+
+      <div id="error-msg" class="text-center mt-3 text-danger" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Countdown overlay -->
+<div id="countdown-overlay">
+  <span id="countdown-number">3</span>
+</div>
+
+<!-- QR overlay -->
+<div id="qr-overlay">
+  <h2 class="fw-semibold">Scan to get your photo!</h2>
+  <img id="qr-img" src="" alt="QR code">
+  <p id="qr-timer">Returning in 10s&hellip;</p>
+  <button id="qr-close-btn" class="btn btn-outline-light btn-sm">Close now</button>
+</div>
+
+<script>
+  const captureBtn     = document.getElementById('capture-btn');
+  const countdownEl    = document.getElementById('countdown-overlay');
+  const countdownNum   = document.getElementById('countdown-number');
+  const qrOverlay      = document.getElementById('qr-overlay');
+  const qrImg          = document.getElementById('qr-img');
+  const qrTimer        = document.getElementById('qr-timer');
+  const qrCloseBtn     = document.getElementById('qr-close-btn');
+  const loadingMsg     = document.getElementById('loading-msg');
+  const errorMsg       = document.getElementById('error-msg');
+
+  let qrResetInterval  = null;
+
+  captureBtn.addEventListener('click', startCapture);
+  qrCloseBtn.addEventListener('click', resetToPreview);
+
+  async function startCapture() {
+    captureBtn.disabled = true;
+    errorMsg.style.display = 'none';
+
+    // — Countdown 3 → 2 → 1 —
+    countdownEl.style.display = 'flex';
+    for (let i = 3; i >= 1; i--) {
+      countdownNum.textContent = i;
+      // Re-trigger CSS animation by cloning the node
+      const clone = countdownNum.cloneNode(true);
+      countdownNum.parentNode.replaceChild(clone, countdownNum);
+      Object.assign(document, { countdownNum: clone }); // update ref
+      await sleep(1000);
+    }
+    countdownEl.style.display = 'none';
+
+    // — Trigger capture on server —
+    loadingMsg.style.display = 'block';
+
+    try {
+      const resp = await fetch('/capture', { method: 'POST' });
+      const data = await resp.json();
+      loadingMsg.style.display = 'none';
+
+      if (!resp.ok) {
+        showError(data.error || 'Capture failed — please try again.');
+        return;
+      }
+
+      showQR(data.qr_url);
+    } catch (err) {
+      loadingMsg.style.display = 'none';
+      showError('Network error — please try again.');
+    }
+  }
+
+  function showQR(qrUrl) {
+    qrImg.src = qrUrl + '?t=' + Date.now(); // bust cache
+    qrOverlay.style.display = 'flex';
+
+    let remaining = 10;
+    qrTimer.textContent = `Returning in ${remaining}s…`;
+
+    qrResetInterval = setInterval(() => {
+      remaining--;
+      qrTimer.textContent = `Returning in ${remaining}s…`;
+      if (remaining <= 0) resetToPreview();
+    }, 1000);
+  }
+
+  function resetToPreview() {
+    if (qrResetInterval) { clearInterval(qrResetInterval); qrResetInterval = null; }
+    qrOverlay.style.display = 'none';
+    qrImg.src = '';
+    qrTimer.textContent = 'Returning in 10s…';
+    captureBtn.disabled = false;
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+    captureBtn.disabled = false;
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

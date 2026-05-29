@@ -1,0 +1,17 @@
+[project]
+name = "share-site"
+version = "0.1.0"
+description = "Photobooth share site — public photo pages with OG tags and social sharing"
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.0",
+    "python-dotenv>=1.0",
+    "gunicorn>=21.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []

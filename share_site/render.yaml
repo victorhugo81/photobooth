@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: photobooth-share
+    env: python
+    plan: free
+    region: oregon
+
+    # uv is not pre-installed on Render; bootstrap it via pip then sync deps
+    buildCommand: pip install uv && uv sync --frozen
+
+    # Gunicorn with 2 sync workers is plenty for a low-traffic share page
+    startCommand: uv run gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 30
+
+    envVars:
+      # R2 public base URL — set in Render dashboard (no trailing slash)
+      - key: R2_PUBLIC_URL
+        sync: false
+
+      # Full public URL of this Render service (no trailing slash)
+      - key: SITE_URL
+        sync: false
