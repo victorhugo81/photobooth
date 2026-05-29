@@ -170,6 +170,23 @@
       color: #aaa;
     }
 
+    /* ── Removal mode toggle ── */
+    #removal-toggle .btn {
+      font-size: 0.7rem;
+      padding: 2px 10px;
+      border-color: #3d3d60;
+      color: #aaa;
+    }
+    #removal-toggle .btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #removal-toggle .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
     /* ── Loading spinner ── */
     #loading-msg {
       display: none;
@@ -189,12 +206,20 @@
         <img id="video-feed" src="/video_feed" alt="Live preview">
       </div>
 
-      <!-- Background picker (green screen) -->
+      <!-- Background picker -->
       <div class="mt-3 mb-1">
-        <p class="text-center small mb-2" style="color:#888">
-          Choose a background
-          <span class="badge ms-1" style="background:#1e3a2e;color:#4ade80;font-size:0.6rem;">green screen</span>
-        </p>
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+          <span class="small" style="color:#888">Choose a background</span>
+          <!-- Removal mode toggle — hidden until backgrounds load -->
+          <div id="removal-toggle" class="btn-group btn-group-sm" role="group" style="display:none!important">
+            <button type="button" class="btn btn-outline-secondary removal-btn active" data-mode="greenscreen" title="Requires a physical green screen">
+              Green Screen
+            </button>
+            <button type="button" class="btn btn-outline-secondary removal-btn" data-mode="ai" id="ai-btn" title="AI removal — works on any background, slower">
+              AI Remove
+            </button>
+          </div>
+        </div>
         <div id="bg-grid" class="picker-grid">
           <!-- populated by JS from /backgrounds -->
         </div>
@@ -269,13 +294,39 @@
   let qrResetInterval  = null;
   let selectedTheme      = 'none';
   let selectedBackground = 'none';
+  let removalMode        = 'greenscreen';
+
+  // ── Removal mode toggle ──────────────────────────────────────────────────
+  document.querySelectorAll('.removal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.removal-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      removalMode = btn.dataset.mode;
+    });
+  });
 
   // ── Background picker (loaded dynamically) ───────────────────────────────
   async function loadBackgrounds() {
     try {
-      const resp = await fetch('/backgrounds');
-      const list = await resp.json();
+      const [bgResp, capResp] = await Promise.all([
+        fetch('/backgrounds'),
+        fetch('/capabilities'),
+      ]);
+      const list = await bgResp.json();
+      const caps = await capResp.json();
       const grid = document.getElementById('bg-grid');
+
+      // Show the removal toggle only when backgrounds are available (more than just "None")
+      if (list.length > 1) {
+        document.getElementById('removal-toggle').style.removeProperty('display');
+      }
+
+      // Disable AI button if rembg isn't installed
+      if (!caps.rembg) {
+        const aiBtn = document.getElementById('ai-btn');
+        aiBtn.disabled = true;
+        aiBtn.title = 'rembg not installed — run: uv add rembg';
+      }
 
       list.forEach((bg, i) => {
         const btn = document.createElement('button');
@@ -340,7 +391,7 @@
       const resp = await fetch('/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: selectedTheme, background: selectedBackground }),
+        body: JSON.stringify({ theme: selectedTheme, background: selectedBackground, removal: removalMode }),
       });
       const data = await resp.json();
       loadingMsg.style.display = 'none';

@@ -11,7 +11,7 @@ from flask import Flask, Response, jsonify, render_template, request
 from camera import Camera, mjpeg_generator
 from models import Photo, init_db
 from qr_generator import generate_qr
-from backgrounds import apply_background, background_list
+from backgrounds import apply_background, apply_background_ai, background_list, rembg_available
 from themes import apply_theme, theme_list
 from uploader import update_photos_json, upload_photo
 
@@ -68,10 +68,11 @@ def create_app() -> Flask:
         data = request.get_json(silent=True) or {}
         theme_id = data.get("theme", "none")
         background_id = data.get("background", "none")
+        removal_mode = data.get("removal", "greenscreen")  # "greenscreen" | "ai"
         if not _capture_lock.acquire(blocking=False):
             return jsonify({"error": "A capture is already in progress"}), 409
         try:
-            result = _run_capture(app, theme_id, background_id)
+            result = _run_capture(app, theme_id, background_id, removal_mode)
             return jsonify(result)
         except Exception as exc:
             logger.exception("Capture failed")
@@ -87,6 +88,10 @@ def create_app() -> Flask:
     def backgrounds():
         return jsonify(background_list())
 
+    @app.route("/capabilities")
+    def capabilities():
+        return jsonify({"rembg": rembg_available()})
+
     @app.route("/status")
     def status():
         return jsonify(_last_status)
@@ -98,7 +103,12 @@ def create_app() -> Flask:
 # Core capture logic — callable from route OR GPIO thread
 # ------------------------------------------------------------------ #
 
-def _run_capture(app: Flask, theme_id: str = "none", background_id: str = "none") -> dict:
+def _run_capture(
+    app: Flask,
+    theme_id: str = "none",
+    background_id: str = "none",
+    removal_mode: str = "greenscreen",
+) -> dict:
     global _last_status
 
     now = datetime.datetime.utcnow()
@@ -108,13 +118,16 @@ def _run_capture(app: Flask, theme_id: str = "none", background_id: str = "none"
     # 1. Capture still image
     _camera.capture_photo(str(local_path))
 
-    # 2. Green-screen background replacement (before frame so border sits on top)
+    # 2. Background replacement (before frame so border sits on top)
     if background_id != "none":
         raw = PILImage.open(str(local_path))
-        composited = apply_background(raw, background_id)
+        if removal_mode == "ai":
+            composited = apply_background_ai(raw, background_id)
+        else:
+            composited = apply_background(raw, background_id)
         raw.close()
         composited.save(str(local_path), "JPEG", quality=95)
-        logger.info("Applied background '%s' to %s", background_id, filename)
+        logger.info("Applied background '%s' (%s) to %s", background_id, removal_mode, filename)
 
     # 3. Apply theme frame (compositing via Pillow)
     if theme_id != "none":
