@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 import re
@@ -7,7 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from PIL import Image as PILImage
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, redirect, render_template, request
 from werkzeug.utils import secure_filename
 
 from camera import Camera, mjpeg_generator
@@ -28,6 +29,21 @@ _camera: Camera | None = None
 _Session = None
 _last_status: dict = {}
 _capture_lock = threading.Lock()
+
+
+_VALID_EVENTS = {"default", "christmas", "birthday", "graduation", "wedding"}
+
+
+def _get_event(app: Flask) -> str:
+    try:
+        data = json.loads((Path(app.root_path) / "event.json").read_text())
+        return data.get("event", "default")
+    except Exception:
+        return "default"
+
+
+def _set_event(app: Flask, event: str) -> None:
+    (Path(app.root_path) / "event.json").write_text(json.dumps({"event": event}))
 
 
 def create_app() -> Flask:
@@ -67,17 +83,36 @@ def create_app() -> Flask:
         gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
         return render_template("admin.html", gallery_url=gallery_url)
 
-    @app.route("/photos")
-    def photos_page():
+    @app.route("/gallery")
+    def gallery():
         gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
+        event = _get_event(app)
         with _Session() as session:
             rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(200).all()
             photos_data = [p.to_dict() for p in rows]
-        return render_template("photos.html",
+        return render_template("gallery.html",
                                photos=photos_data,
                                gallery_url=gallery_url,
-                               share_site_url=share_site_url)
+                               share_site_url=share_site_url,
+                               event=event)
+
+    @app.route("/photos")
+    def photos_redirect():
+        return redirect("/gallery", 301)
+
+    @app.route("/api/event", methods=["GET"])
+    def get_event_route():
+        return jsonify({"event": _get_event(app)})
+
+    @app.route("/api/event", methods=["POST"])
+    def set_event_route():
+        data = request.get_json(silent=True) or {}
+        event = data.get("event", "default")
+        if event not in _VALID_EVENTS:
+            return jsonify({"error": "Invalid event type"}), 400
+        _set_event(app, event)
+        return jsonify({"event": event})
 
     @app.route("/video_feed")
     def video_feed():
@@ -89,7 +124,7 @@ def create_app() -> Flask:
     @app.route("/capture", methods=["POST"])
     def capture():
         data = request.get_json(silent=True) or {}
-        theme_id = data.get("theme", "none")
+        theme_id = data.get("theme", "classic")
         background_id = data.get("background", "none")
         removal_mode = data.get("removal", "greenscreen")  # "greenscreen" | "ai"
         if not _capture_lock.acquire(blocking=False):

@@ -1,3 +1,53 @@
+/* ── Event theme overrides (override main.css :root vars per body class) ── */
+
+body.event-christmas {
+  --bg:      #fdf5f0;
+  --bg2:     #f5ddd0;
+  --text:    #1a0505;
+  --accent:  #b01a1a;
+  --gold:    #2a6e2a;
+  --border:  #c89090;
+  --muted:   #8a5050;
+  --paper:   #fff8f5;
+  --shadow:  rgba(80, 10, 10, 0.15);
+}
+
+body.event-birthday {
+  --bg:      #fdf4ff;
+  --bg2:     #f4d8f8;
+  --text:    #1a0520;
+  --accent:  #9b1c6e;
+  --gold:    #d4820a;
+  --border:  #d4a8d4;
+  --muted:   #8a5a80;
+  --paper:   #fffaff;
+  --shadow:  rgba(80, 10, 60, 0.15);
+}
+
+body.event-graduation {
+  --bg:      #f4f6fa;
+  --bg2:     #d8e0f0;
+  --text:    #0a1528;
+  --accent:  #1a3a72;
+  --gold:    #b8860b;
+  --border:  #8a9fc0;
+  --muted:   #5a6a8a;
+  --paper:   #f8faff;
+  --shadow:  rgba(10, 20, 60, 0.15);
+}
+
+body.event-wedding {
+  --bg:      #fdf8fc;
+  --bg2:     #f0e0ec;
+  --text:    #1a0818;
+  --accent:  #7a3060;
+  --gold:    #c0905a;
+  --border:  #d4b0c8;
+  --muted:   #9a7088;
+  --paper:   #fffaff;
+  --shadow:  rgba(60, 10, 50, 0.15);
+}
+
 /* ── Section heading ── */
 .section-heading {
   font-family: 'Bebas Neue', sans-serif;
@@ -27,7 +77,6 @@
   height: 150px;
   object-fit: cover;
   display: block;
-  filter: sepia(0.08) contrast(0.97);
 }
 .photo-card-body {
   padding: 0.45rem 0.6rem;

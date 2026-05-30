@@ -118,3 +118,37 @@ function toast(msg, type = 'success') {
 }
 
 loadBackgrounds();
+loadEvent();
+
+async function loadEvent() {
+  try {
+    const resp = await fetch('/api/event');
+    const data = await resp.json();
+    setActiveEvent(data.event);
+  } catch (_) {}
+}
+
+function setActiveEvent(event) {
+  document.querySelectorAll('.event-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.event === event);
+  });
+}
+
+document.querySelectorAll('.event-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const event = btn.dataset.event;
+    try {
+      const resp = await fetch('/api/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event }),
+      });
+      if (resp.ok) {
+        setActiveEvent(event);
+        toast(`Event set: ${btn.querySelector('.event-label').textContent}`, 'success');
+      } else {
+        toast('Failed to save event', 'error');
+      }
+    } catch (_) { toast('Network error', 'error'); }
+  });
+});

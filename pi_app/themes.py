@@ -7,7 +7,27 @@ The CSS live preview in index.html mirrors the visual style.
 """
 from __future__ import annotations
 
-from PIL import Image, ImageDraw, ImageEnhance
+import datetime
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+
+
+def _handwriting_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    candidates = [
+        Path(__file__).parent / "static" / "fonts" / "handwriting.ttf",
+        Path("/System/Library/Fonts/Bradley Hand.ttc"),
+        Path("/System/Library/Fonts/Supplemental/Bradley Hand Bold.ttf"),
+        Path("/Library/Fonts/Chalkboard.ttc"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    ]
+    for path in candidates:
+        if path.exists():
+            try:
+                return ImageFont.truetype(str(path), size=size)
+            except Exception:
+                continue
+    return ImageFont.load_default(size=size)
 
 Color = tuple[int, int, int]
 
@@ -26,20 +46,27 @@ def _apply_none(img: Image.Image, frame_color: Color | None = None) -> Image.Ima
 
 def _apply_classic(img: Image.Image, frame_color: Color | None = None) -> Image.Image:
     """Polaroid frame — even border on three sides, wider at bottom."""
-    color = frame_color or (255, 255, 255)
+    color = (255, 255, 255)
     w, h = img.size
-    bx = int(w * 0.06)
-    bt = int(h * 0.06)
-    bb = int(h * 0.20)
+    bx = int(w * 0.03)
+    bt = int(h * 0.03)
+    bb = int(h * 0.15)
 
     out = Image.new("RGB", (w + bx * 2, h + bt + bb), color)
     out.paste(img, (bx, bt))
 
     draw = ImageDraw.Draw(out)
-    label = "PHOTOBOOTH"
-    tx = (out.width - len(label) * 6) // 2
-    ty = h + bt + (bb - 18) // 2
-    draw.text((tx, ty), label, fill=_text_color(color))
+    date_str = datetime.date.today().strftime("%B %d, %Y")
+    label = f"PHOTOBOOTH  |  {date_str}"
+    font_size = max(20, int(bb * 0.30))
+    font = _handwriting_font(font_size)
+    bbox = draw.textbbox((0, 0), label, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    tx = (out.width - tw) // 2
+    ty = h + bt + (bb - th) // 2
+    stroke = max(1, font_size // 18)
+    draw.text((tx, ty), label, font=font, fill=_text_color(color),
+              stroke_width=stroke, stroke_fill=_text_color(color))
     return out
 
 

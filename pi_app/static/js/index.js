@@ -1,12 +1,13 @@
-const captureBtn   = document.getElementById('capture-btn');
-const countdownEl  = document.getElementById('countdown-overlay');
-const countdownNum = document.getElementById('countdown-number');
-const qrOverlay    = document.getElementById('qr-overlay');
-const qrImg        = document.getElementById('qr-img');
-const qrTimer      = document.getElementById('qr-timer');
-const qrCloseBtn   = document.getElementById('qr-close-btn');
-const loadingMsg   = document.getElementById('loading-msg');
-const errorMsg     = document.getElementById('error-msg');
+const captureBtn      = document.getElementById('capture-btn');
+const countdownEl     = document.getElementById('countdown-overlay');
+const countdownNum    = document.getElementById('countdown-number');
+const qrOverlay       = document.getElementById('qr-overlay');
+const qrImg           = document.getElementById('qr-img');
+const qrTimer         = document.getElementById('qr-timer');
+const qrCloseBtn      = document.getElementById('qr-close-btn');
+const loadingMsg      = document.getElementById('loading-msg');
+const errorMsg        = document.getElementById('error-msg');
+const bgSelectedLabel = document.getElementById('bg-selected-label');
 
 let qrResetInterval  = null;
 let selectedBackground = 'none';
@@ -56,6 +57,8 @@ async function loadBackgrounds() {
         grid.querySelectorAll('.picker-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedBackground = bg.id;
+        bgSelectedLabel.textContent = bg.id === 'none' ? 'None selected' : `Selected: ${bg.name}`;
+        bootstrap.Modal.getInstance(document.getElementById('bg-modal'))?.hide();
       });
 
       grid.appendChild(btn);
