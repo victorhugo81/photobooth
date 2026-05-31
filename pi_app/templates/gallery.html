@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
 </head>
-<body class="event-{{ event }}">
+<body class="event-{{ event }} theme-{{ ui_theme }}">
 
 <header class="site-header">
   {% set _icons = {
@@ -43,31 +43,25 @@
   </div>
 </header>
 
-<div class="container pb-5" style="max-width:900px">
+<div class="container" style="max-width:900px">
 
-  <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
     <span class="section-heading">Captured Photos</span>
-    <span id="photo-count">{{ photos|length }} photo{{ 's' if photos|length != 1 else '' }}</span>
+    <span id="photo-count" class="section-count"></span>
   </div>
 
-  {% if photos %}
-  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
-    {% for photo in photos %}
-    <div class="col">
-      <a class="photo-card"
-         href="{{ share_site_url }}/?f={{ photo.filename }}"
-         target="_blank" rel="noopener">
-        <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy">
-
-      </a>
-    </div>
-    {% endfor %}
+  <div class="gallery-rows">
+    <p class="row-label">Latest</p>
+    <div id="row-latest" class="gallery-row"></div>
+    <p class="row-label">All Photos</p>
+    <div id="row-slideshow" class="gallery-row"></div>
   </div>
-  {% else %}
-  <p id="empty-msg" class="text-center mt-5">No photos yet</p>
-  {% endif %}
 
 </div>
 
+<script>
+  const SHARE_SITE_URL = "{{ share_site_url }}";
+</script>
+<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
 </body>
 </html>

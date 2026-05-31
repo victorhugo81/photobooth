@@ -36,6 +36,8 @@ _VALID_EVENTS = {
     "girls_birthday", "boys_birthday", "new_years", "halloween",
 }
 
+_VALID_UI_THEMES = {"dark", "white", "luxury"}
+
 
 def _data_dir(app: Flask) -> Path:
     return Path(app.root_path) / "templates" / "data"
@@ -51,6 +53,18 @@ def _get_event(app: Flask) -> str:
 
 def _set_event(app: Flask, event: str) -> None:
     (_data_dir(app) / "event.json").write_text(json.dumps({"event": event}))
+
+
+def _get_ui_theme(app: Flask) -> str:
+    try:
+        data = json.loads((_data_dir(app) / "ui_theme.json").read_text())
+        return data.get("theme", "dark")
+    except Exception:
+        return "dark"
+
+
+def _set_ui_theme(app: Flask, theme: str) -> None:
+    (_data_dir(app) / "ui_theme.json").write_text(json.dumps({"theme": theme}))
 
 
 def create_app() -> Flask:
@@ -84,12 +98,12 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
-        return render_template("index.html", gallery_url=gallery_url)
+        return render_template("index.html", gallery_url=gallery_url, ui_theme=_get_ui_theme(app))
 
     @app.route("/admin")
     def admin():
         gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
-        return render_template("admin.html", gallery_url=gallery_url)
+        return render_template("admin.html", gallery_url=gallery_url, ui_theme=_get_ui_theme(app))
 
     @app.route("/gallery")
     def gallery():
@@ -108,7 +122,8 @@ def create_app() -> Flask:
                                gallery_url=gallery_url,
                                share_site_url=share_site_url,
                                event=event,
-                               img_label=img_label)
+                               img_label=img_label,
+                               ui_theme=_get_ui_theme(app))
 
     @app.route("/photos")
     def photos_redirect():
@@ -212,6 +227,25 @@ def create_app() -> Flask:
             return jsonify({"error": "Label must be 1–80 characters"}), 400
         (_data_dir(app) / "label.json").write_text(json.dumps({"text": text}))
         return jsonify({"text": text})
+
+    @app.route("/api/ui-theme", methods=["GET"])
+    def get_ui_theme_route():
+        return jsonify({"theme": _get_ui_theme(app)})
+
+    @app.route("/api/ui-theme", methods=["POST"])
+    def set_ui_theme_route():
+        data = request.get_json(silent=True) or {}
+        theme = data.get("theme", "dark")
+        if theme not in _VALID_UI_THEMES:
+            return jsonify({"error": "Invalid theme"}), 400
+        _set_ui_theme(app, theme)
+        return jsonify({"theme": theme})
+
+    @app.route("/api/photos")
+    def api_photos():
+        with _Session() as session:
+            rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(500).all()
+            return jsonify([p.to_dict() for p in rows])
 
     @app.route("/capabilities")
     def capabilities():

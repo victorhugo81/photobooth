@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
-<body>
+<body class="theme-{{ ui_theme }}">
 
 <header class="site-header">
   <div class="film-line"></div>
@@ -33,7 +33,6 @@
   <!-- Event selector -->
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
     <span class="section-heading"><strong>Event Type</strong></span>
-    <a href="/gallery" class="gallery-link">View Gallery &rarr;</a>
   </div>
   <div id="event-grid" class="event-grid">
     <button class="event-btn" data-event="default">
@@ -85,6 +84,27 @@
     <button id="label-save-btn" class="label-save-btn">Save</button>
   </div>
   <p class="label-hint">Appears on every photo next to the date — e.g. "Mikkel's Birthday"</p>
+
+  <hr class="section-divider">
+
+  <!-- UI Theme selector -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading"><strong>UI Theme</strong></span>
+  </div>
+  <div id="theme-grid" class="event-grid">
+    <button class="event-btn theme-btn" data-theme="dark">
+      <span class="event-swatch theme-swatch-dark"></span>
+      <span class="event-label">Dark</span>
+    </button>
+    <button class="event-btn theme-btn" data-theme="white">
+      <span class="event-swatch theme-swatch-white"></span>
+      <span class="event-label">White</span>
+    </button>
+    <button class="event-btn theme-btn" data-theme="luxury">
+      <span class="event-swatch theme-swatch-luxury"></span>
+      <span class="event-label">Luxury</span>
+    </button>
+  </div>
 
   <hr class="section-divider">
 

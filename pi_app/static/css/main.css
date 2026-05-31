@@ -1,14 +1,41 @@
+/* ── photobooth and admin Theme  ── */
+/* default = dark */
 :root {
-  --bg:      #f2e8d5;
-  --bg2:     #e4d4b4;
-  --text:    #2c1a0e;
-  --accent:  #7a3b10;
-  --gold:    #b8860b;
-  --border:  #c4a882;
-  --muted:   #9a7b5a;
-  --paper:   #f8f2e6;
-  --shadow:  rgba(44, 26, 14, 0.18);
+  --bg:      #121212;
+  --bg2:     #1e1e1e;
+  --text:    #f5f5f5;
+  --accent:  #ffffff;
+  --gold:    #b0b0b0;
+  --border:  #333333;
+  --muted:   #888888;
+  --paper:   #1a1a1a;
+  --shadow:  rgba(0, 0, 0, 0.35);
 }
+
+body.theme-white {
+  --bg:      #ffffff;
+  --bg2:     #f3f3f3;
+  --text:    #000000;
+  --accent:  #1a1a1a;
+  --gold:    #4a4a4a;
+  --border:  #d9d9d9;
+  --muted:   #808080;
+  --paper:   #ffffff;
+  --shadow:  rgba(0, 0, 0, 0.12);
+}
+
+body.theme-luxury {
+  --bg:      #111111;
+  --bg2:     #1f1f1f;
+  --text:    #f5f5f5;
+  --accent:  #d4af37;
+  --gold:    #d4af37;
+  --border:  #6e5a1f;
+  --muted:   #b8a369;
+  --paper:   #262626;
+  --shadow:  rgba(0, 0, 0, 0.35);
+}
+/* ── end photobooth and admin Theme  ── */
 
 *, *::before, *::after { box-sizing: border-box; }
 

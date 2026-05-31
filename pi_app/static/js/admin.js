@@ -120,6 +120,7 @@ function toast(msg, type = 'success') {
 loadBackgrounds();
 loadEvent();
 loadLabel();
+loadUiTheme();
 
 async function loadLabel() {
   try {
@@ -156,6 +157,42 @@ function setActiveEvent(event) {
     btn.classList.toggle('active', btn.dataset.event === event);
   });
 }
+
+async function loadUiTheme() {
+  try {
+    const resp = await fetch('/api/ui-theme');
+    const data = await resp.json();
+    setActiveUiTheme(data.theme);
+  } catch (_) {}
+}
+
+function setActiveUiTheme(theme) {
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
+  document.body.className = document.body.className
+    .replace(/\btheme-\S+/g, '').trim();
+  document.body.classList.add(`theme-${theme}`);
+}
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const theme = btn.dataset.theme;
+    try {
+      const resp = await fetch('/api/ui-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme }),
+      });
+      if (resp.ok) {
+        setActiveUiTheme(theme);
+        toast(`Theme: ${btn.querySelector('.event-label').textContent}`, 'success');
+      } else {
+        toast('Failed to save theme', 'error');
+      }
+    } catch (_) { toast('Network error', 'error'); }
+  });
+});
 
 document.querySelectorAll('.event-btn').forEach(btn => {
   btn.addEventListener('click', async () => {

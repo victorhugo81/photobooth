@@ -293,6 +293,16 @@ body.event-halloween {
   color: var(--muted);
 }
 
+/* ── Row label ── */
+.row-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  margin: 0;
+  padding-top: 0.6rem;
+}
+
 /* ── Empty state ── */
 #empty-msg {
   font-family: 'Bebas Neue', sans-serif;
@@ -301,8 +311,8 @@ body.event-halloween {
 }
 
 /* ── Scrapbook grid: extra row gap for tilted cards ── */
-.row.row-cols-2 {
-  row-gap: 2.8rem !important;
+.gallery-row {
+  row-gap: 2.8rem;
 }
 
 /* ── Column: elevate on hover so card isn't clipped by siblings ── */
@@ -371,9 +381,69 @@ body.event-halloween {
 
 .photo-card img {
   width: 100%;
-  height: 150px;
+  height: 220px;
   object-fit: cover;
   display: block;
 }
 
 .photo-card-body { display: none; }
+
+/* ── Fit entire page to viewport with no scroll ── */
+html { height: 100%; }
+
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body > .container {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  padding-bottom: 1rem !important;
+  overflow: visible;
+}
+
+body > .container > .d-flex { flex-shrink: 0; }
+
+/* Two-row gallery layout */
+.gallery-rows {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto 1fr;
+  row-gap: 0;
+}
+
+.gallery-row {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 1rem;
+  align-items: stretch;
+}
+
+/* Fade transition when row content changes */
+.gallery-row { transition: opacity 0.5s ease; }
+.row-fade-out { opacity: 0; }
+.row-fade-in  { animation: row-fade-in 0.5s ease forwards; }
+
+@keyframes row-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.gallery-row > .col {
+  padding: 0 !important;
+  width: auto !important;
+  flex: none !important;
+  min-width: 0;
+}
+
+/* Cards and images fill their grid cell */
+.photo-card { height: 100%; }
+
+.photo-card img {
+  height: 100% !important;
+}

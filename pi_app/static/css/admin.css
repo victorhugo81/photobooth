@@ -96,6 +96,10 @@
 .event-swatch-new-years      { background: #c8a800; }
 .event-swatch-halloween      { background: #c05200; }
 
+.theme-swatch-dark    { background: #1e1e1e; border-color: #555; }
+.theme-swatch-white   { background: #f3f3f3; border-color: #ccc; }
+.theme-swatch-luxury  { background: #d4af37; border-color: #8a6a00; }
+
 .gallery-link {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 0.78rem;
