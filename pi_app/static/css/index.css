@@ -92,16 +92,15 @@ body { display: flex; flex-direction: column; }
 
 /* ── Background grid (inside modal) ── */
 .picker-grid {
-  display: flex;
-  gap: 0.7rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
 }
 .picker-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: none;
   border: 2px solid var(--border);
   border-radius: 2px;
@@ -110,25 +109,26 @@ body { display: flex; flex-direction: column; }
   transition: border-color 0.15s, transform 0.15s;
   color: var(--muted);
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
+  width: 100%;
 }
 .picker-btn:hover { border-color: var(--gold); color: var(--text); }
 .picker-btn.active {
   border-color: var(--accent);
   color: var(--text);
   box-shadow: 2px 2px 0 var(--border);
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 .bg-thumb {
-  width: 80px;
-  height: 54px;
+  width: 100%;
+  height: 130px;
   border-radius: 1px;
   object-fit: cover;
   display: block;
 }
 .bg-thumb-none {
-  width: 80px;
-  height: 54px;
+  width: 100%;
+  height: 130px;
   border-radius: 1px;
   background: repeating-linear-gradient(
     45deg,
@@ -145,6 +145,10 @@ body { display: flex; flex-direction: column; }
   border: 2px solid var(--border);
   border-radius: 2px;
   box-shadow: 4px 4px 0 var(--bg2);
+}
+#bg-modal .modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
 }
 #bg-modal .modal-header {
   border-bottom: 1px solid var(--border);
