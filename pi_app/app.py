@@ -31,7 +31,10 @@ _last_status: dict = {}
 _capture_lock = threading.Lock()
 
 
-_VALID_EVENTS = {"default", "christmas", "birthday", "graduation", "wedding"}
+_VALID_EVENTS = {
+    "default", "christmas", "birthday", "graduation", "wedding",
+    "girls_birthday", "boys_birthday", "new_years", "halloween",
+}
 
 
 def _get_event(app: Flask) -> str:
@@ -88,6 +91,10 @@ def create_app() -> Flask:
         gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
         event = _get_event(app)
+        try:
+            img_label = json.loads((Path(app.root_path) / "label.json").read_text()).get("text", "PHOTOBOOTH")
+        except Exception:
+            img_label = "PHOTOBOOTH"
         with _Session() as session:
             rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(200).all()
             photos_data = [p.to_dict() for p in rows]
@@ -95,7 +102,8 @@ def create_app() -> Flask:
                                photos=photos_data,
                                gallery_url=gallery_url,
                                share_site_url=share_site_url,
-                               event=event)
+                               event=event,
+                               img_label=img_label)
 
     @app.route("/photos")
     def photos_redirect():

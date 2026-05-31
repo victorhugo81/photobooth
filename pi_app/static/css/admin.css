@@ -86,11 +86,15 @@
   border: 1px solid rgba(0,0,0,0.1);
   flex-shrink: 0;
 }
-.event-swatch-default    { background: #7a3b10; }
-.event-swatch-christmas  { background: #b01a1a; }
-.event-swatch-birthday   { background: #9b1c6e; }
-.event-swatch-graduation { background: #1a3a72; }
-.event-swatch-wedding    { background: #7a3060; }
+.event-swatch-default       { background: #7a3b10; }
+.event-swatch-christmas     { background: #b01a1a; }
+.event-swatch-birthday      { background: #9b1c6e; }
+.event-swatch-graduation    { background: #1a3a72; }
+.event-swatch-wedding       { background: #7a3060; }
+.event-swatch-girls-birthday { background: #e0408a; }
+.event-swatch-boys-birthday  { background: #1c72c8; }
+.event-swatch-new-years      { background: #c8a800; }
+.event-swatch-halloween      { background: #c05200; }
 
 .gallery-link {
   font-family: 'Bebas Neue', sans-serif;

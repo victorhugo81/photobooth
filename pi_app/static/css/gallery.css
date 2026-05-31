@@ -1,85 +1,261 @@
 /* ── Event theme variable overrides ─────────────────────────────────────── */
 
+/* Christmas — candy-cane diagonal stripes, red glow corners */
 body.event-christmas {
-  --bg:      #fdf5f0;
-  --bg2:     #f5ddd0;
+  --bg:      #fef0f0;
+  --bg2:     #f8d0d0;
   --text:    #1a0505;
-  --accent:  #b01a1a;
-  --gold:    #2a6e2a;
-  --border:  #c89090;
-  --muted:   #8a5050;
-  --paper:   #fff8f5;
-  --shadow:  rgba(80, 10, 10, 0.22);
-  background-color: #fdf5f0;
+  --accent:  #c01010;
+  --gold:    #1e7a1e;
+  --border:  #d08080;
+  --muted:   #8a4040;
+  --paper:   #fff5f5;
+  --shadow:  rgba(100, 0, 0, 0.25);
+  background-color: #fef0f0;
   background-image:
-    radial-gradient(circle, rgba(176,26,26,0.10) 1px, transparent 1px),
-    radial-gradient(circle, rgba(42,110,42,0.10) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 0%, rgba(176,26,26,0.07) 0%, transparent 55%);
-  background-size: 24px 24px, 24px 24px, 100% 100%;
-  background-position: 0 0, 12px 12px, 0 0;
+    repeating-linear-gradient(
+      -45deg,
+      transparent           0px, transparent           14px,
+      rgba(192, 16, 16, 0.13) 14px, rgba(192, 16, 16, 0.13) 20px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent           0px, transparent           14px,
+      rgba(30, 122, 30, 0.10) 14px, rgba(30, 122, 30, 0.10) 20px
+    ),
+    radial-gradient(ellipse at 0%   0%,   rgba(192,16,16,0.18) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 0%,   rgba(30,122,30,0.18) 0%, transparent 40%),
+    radial-gradient(ellipse at 50%  100%, rgba(192,16,16,0.12) 0%, transparent 45%);
 }
 
+/* Birthday — bold multi-colour confetti stripes */
 body.event-birthday {
-  --bg:      #fdf4ff;
-  --bg2:     #f4d8f8;
+  --bg:      #fdf0ff;
+  --bg2:     #f0c8f8;
   --text:    #1a0520;
-  --accent:  #9b1c6e;
-  --gold:    #d4820a;
-  --border:  #d4a8d4;
-  --muted:   #8a5a80;
+  --accent:  #c01880;
+  --gold:    #e08000;
+  --border:  #e098d0;
+  --muted:   #9a4888;
   --paper:   #fffaff;
-  --shadow:  rgba(80, 10, 60, 0.22);
-  background-color: #fdf4ff;
+  --shadow:  rgba(100, 0, 80, 0.25);
+  background-color: #fdf0ff;
   background-image:
-    radial-gradient(circle, rgba(155,28,110,0.10) 1.5px, transparent 1.5px),
-    radial-gradient(circle, rgba(212,130,10,0.10) 1.5px, transparent 1.5px),
-    radial-gradient(circle, rgba(80,160,80,0.07) 1.5px, transparent 1.5px);
-  background-size: 18px 18px, 18px 18px, 18px 18px;
-  background-position: 0 0, 9px 9px, 4px 13px;
+    repeating-linear-gradient(
+      30deg,
+      rgba(220, 30, 120, 0.12) 0px, rgba(220, 30, 120, 0.12)  7px,
+      transparent               7px, transparent               30px
+    ),
+    repeating-linear-gradient(
+      -50deg,
+      rgba(230, 140,  10, 0.12) 0px, rgba(230, 140, 10, 0.12)  7px,
+      transparent                7px, transparent               34px
+    ),
+    repeating-linear-gradient(
+      80deg,
+      rgba(60, 180, 100, 0.10) 0px, rgba(60, 180, 100, 0.10)  5px,
+      transparent               5px, transparent               28px
+    ),
+    repeating-linear-gradient(
+      -20deg,
+      rgba(80, 120, 230, 0.10) 0px, rgba(80, 120, 230, 0.10)  5px,
+      transparent               5px, transparent               32px
+    ),
+    radial-gradient(ellipse at 50% 0%, rgba(230,140,10,0.15) 0%, transparent 55%);
 }
 
+/* Graduation — navy & gold academic grid with bold top banner */
 body.event-graduation {
-  --bg:      #eef2f8;
-  --bg2:     #d8e0f0;
-  --text:    #0a1528;
-  --accent:  #1a3a72;
-  --gold:    #b8860b;
-  --border:  #8a9fc0;
-  --muted:   #5a6a8a;
-  --paper:   #f8faff;
-  --shadow:  rgba(10, 20, 60, 0.22);
-  background-color: #eef2f8;
+  --bg:      #e8eef8;
+  --bg2:     #c8d4ec;
+  --text:    #080e20;
+  --accent:  #0e2860;
+  --gold:    #c89a00;
+  --border:  #7090c0;
+  --muted:   #4860a0;
+  --paper:   #f4f8ff;
+  --shadow:  rgba(8, 20, 80, 0.28);
+  background-color: #e8eef8;
   background-image:
     repeating-linear-gradient(
       90deg,
-      transparent 0px, transparent 38px,
-      rgba(26,58,114,0.05) 38px, rgba(26,58,114,0.05) 39px
+      transparent 0px, transparent 48px,
+      rgba(14,40,96,0.09) 48px, rgba(14,40,96,0.09) 50px
     ),
     repeating-linear-gradient(
       0deg,
-      transparent 0px, transparent 38px,
-      rgba(184,134,11,0.05) 38px, rgba(184,134,11,0.05) 39px
+      transparent 0px, transparent 48px,
+      rgba(200,154,0,0.09) 48px, rgba(200,154,0,0.09) 50px
     ),
-    linear-gradient(175deg, rgba(26,58,114,0.08) 0%, transparent 40%);
+    linear-gradient(180deg,
+      rgba(14,40,96,0.22) 0%,
+      rgba(14,40,96,0.06) 18%,
+      transparent 35%
+    ),
+    radial-gradient(ellipse at 100% 100%, rgba(200,154,0,0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 0%   100%, rgba(14, 40,96,0.12) 0%, transparent 40%);
 }
 
+/* Wedding — blush & gold with a soft diamond lattice */
 body.event-wedding {
-  --bg:      #fdf8fc;
-  --bg2:     #f0e0ec;
+  --bg:      #fdf4f8;
+  --bg2:     #f0d0e4;
   --text:    #1a0818;
-  --accent:  #7a3060;
-  --gold:    #c0905a;
-  --border:  #d4b0c8;
-  --muted:   #9a7088;
+  --accent:  #8c2060;
+  --gold:    #c8882a;
+  --border:  #e0b0cc;
+  --muted:   #a06080;
   --paper:   #fffaff;
-  --shadow:  rgba(60, 10, 50, 0.22);
-  background-color: #fdf8fc;
+  --shadow:  rgba(80, 10, 60, 0.25);
+  background-color: #fdf4f8;
   background-image:
-    radial-gradient(circle, rgba(192,144,90,0.12) 1px, transparent 1px),
-    radial-gradient(circle, rgba(122,48,96,0.08) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 0%, rgba(192,144,90,0.10) 0%, transparent 50%);
-  background-size: 16px 16px, 16px 16px, 100% 100%;
-  background-position: 0 0, 8px 8px, 0 0;
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 18px,
+      rgba(200,136,42,0.12) 18px, rgba(200,136,42,0.12) 20px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0px, transparent 18px,
+      rgba(140,32,96,0.09) 18px, rgba(140,32,96,0.09) 20px
+    ),
+    radial-gradient(ellipse at 50%   0%,   rgba(200,136,42,0.20) 0%, transparent 45%),
+    radial-gradient(ellipse at 0%   100%,  rgba(140,32,96,0.14) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 100%,  rgba(200,136,42,0.14) 0%, transparent 40%);
+}
+
+/* Girl's Birthday — hot pink, lilac, sparkle dots */
+body.event-girls_birthday {
+  --bg:      #fff0f8;
+  --bg2:     #f8c8e8;
+  --text:    #1a0415;
+  --accent:  #d01878;
+  --gold:    #c060c0;
+  --border:  #f0a0d0;
+  --muted:   #a04080;
+  --paper:   #fffaff;
+  --shadow:  rgba(180, 0, 100, 0.22);
+  background-color: #fff0f8;
+  background-image:
+    radial-gradient(circle, rgba(220,30,130,0.20) 2px, transparent 2px),
+    radial-gradient(circle, rgba(200,80,200,0.15) 2px, transparent 2px),
+    repeating-linear-gradient(
+      60deg,
+      rgba(220, 30, 130, 0.08) 0px, rgba(220, 30, 130, 0.08)  5px,
+      transparent               5px, transparent               38px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      rgba(200, 80, 200, 0.07) 0px, rgba(200, 80, 200, 0.07)  5px,
+      transparent               5px, transparent               38px
+    ),
+    radial-gradient(ellipse at 50%   0%, rgba(220,30,130,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 0%  100%, rgba(200,80,200,0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(220,30,130,0.12) 0%, transparent 40%);
+  background-size: 28px 28px, 42px 42px, auto, auto, auto, auto, auto;
+}
+
+/* Boy's Birthday — bold blue, star bursts */
+body.event-boys_birthday {
+  --bg:      #f0f4ff;
+  --bg2:     #c8d8f8;
+  --text:    #040c20;
+  --accent:  #1050c0;
+  --gold:    #e08800;
+  --border:  #90b0e8;
+  --muted:   #4060a0;
+  --paper:   #f8faff;
+  --shadow:  rgba(10, 30, 120, 0.25);
+  background-color: #f0f4ff;
+  background-image:
+    radial-gradient(circle, rgba(20,80,210,0.22) 2px, transparent 2px),
+    radial-gradient(circle, rgba(224,136,0,0.18) 2px, transparent 2px),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 30px,
+      rgba(20,80,210,0.08) 30px, rgba(20,80,210,0.08) 32px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 30px,
+      rgba(224,136,0,0.07) 30px, rgba(224,136,0,0.07) 32px
+    ),
+    linear-gradient(180deg,
+      rgba(20,80,210,0.18) 0%,
+      rgba(20,80,210,0.04) 20%,
+      transparent 40%
+    ),
+    radial-gradient(ellipse at 100% 0%,   rgba(224,136,0,0.20) 0%, transparent 40%),
+    radial-gradient(ellipse at 0%   100%, rgba(20,80,210,0.15) 0%, transparent 45%);
+  background-size: 24px 24px, 40px 40px, auto, auto, auto, auto, auto;
+}
+
+/* New Year's — black & gold, champagne bubbles, fireworks glow */
+body.event-new_years {
+  --bg:      #0a0a14;
+  --bg2:     #1c1c30;
+  --text:    #f8f0c0;
+  --accent:  #d4a800;
+  --gold:    #f0d060;
+  --border:  #60540a;
+  --muted:   #a09020;
+  --paper:   #14141e;
+  --shadow:  rgba(212, 168, 0, 0.30);
+  background-color: #0a0a14;
+  background-image:
+    radial-gradient(circle, rgba(212,168,0,0.35) 1px, transparent 1px),
+    radial-gradient(circle, rgba(240,208,96,0.20) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px),
+    radial-gradient(ellipse at 50%  0%,   rgba(212,168,0,0.30) 0%, transparent 45%),
+    radial-gradient(ellipse at 20%  80%,  rgba(212,168,0,0.18) 0%, transparent 35%),
+    radial-gradient(ellipse at 80%  80%,  rgba(240,208,96,0.18) 0%, transparent 35%),
+    radial-gradient(ellipse at 50%  50%,  rgba(212,168,0,0.06) 0%, transparent 70%);
+  background-size: 22px 22px, 38px 38px, 56px 56px, auto, auto, auto, auto;
+}
+
+/* Halloween — black & orange, cobweb lines, pumpkin glow */
+body.event-halloween {
+  --bg:      #0e0800;
+  --bg2:     #1e1200;
+  --text:    #f8e8c0;
+  --accent:  #c84800;
+  --gold:    #e07800;
+  --border:  #603200;
+  --muted:   #986030;
+  --paper:   #160e00;
+  --shadow:  rgba(200, 72, 0, 0.35);
+  background-color: #0e0800;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 44px,
+      rgba(200,72,0,0.12) 44px, rgba(200,72,0,0.12) 46px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 44px,
+      rgba(200,72,0,0.08) 44px, rgba(200,72,0,0.08) 46px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 22px,
+      rgba(200,72,0,0.06) 22px, rgba(200,72,0,0.06) 23px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0px, transparent 22px,
+      rgba(200,72,0,0.06) 22px, rgba(200,72,0,0.06) 23px
+    ),
+    radial-gradient(ellipse at 50%  100%, rgba(200,72,0,0.40)  0%, transparent 50%),
+    radial-gradient(ellipse at 0%   0%,   rgba(80,0,120,0.25)  0%, transparent 45%),
+    radial-gradient(ellipse at 100% 0%,   rgba(80,0,120,0.20)  0%, transparent 40%);
+}
+
+/* ── Festive gallery title ── */
+.site-title {
+  font-family: 'Pacifico', cursive;
+  font-size: clamp(1.8rem, 6vw, 3.2rem);
+  text-shadow: 2px 3px 0 var(--bg2), 3px 5px 8px var(--shadow);
 }
 
 /* ── Section heading ── */
