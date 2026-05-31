@@ -1,11 +1,10 @@
-const POLL_MS   = 3000;   // how often to check for new photos (row 1)
-const SLIDE_MS  = 15000;  // how often the slideshow advances (row 2)
-const FADE_MS   = 500;    // fade transition duration
-const ROW_COLS  = 3;      // photos per row
+const POLL_MS   = 3000;   // how often to check for a new capture (slot 0)
+const SLIDE_MS  = 15000;  // how often slots 1–5 cycle
+const FADE_MS   = 1200;   // fade duration — must match CSS transition
 
-let allPhotos      = [];
-let slideshowIndex = 0;  // start index for row 2
-let latestKey      = ''; // fingerprint of row 1 to avoid unnecessary redraws
+let allPhotos  = [];
+let cycleIndex = 0;   // start index for cycling slots 1–5
+let latestKey  = '';  // filename of photo in slot 0
 
 function makeCard(photo) {
   const col = document.createElement('div');
@@ -16,29 +15,17 @@ function makeCard(photo) {
   return col;
 }
 
-function renderRow(el, photos, animate = false) {
+// Fade a slot out, swap its content, fade back in
+function setSlot(slotEl, photo, animate = false) {
   if (!animate) {
-    el.innerHTML = '';
-    photos.forEach(p => el.appendChild(makeCard(p)));
+    slotEl.innerHTML = photo ? makeCard(photo).innerHTML : '';
     return;
   }
-  el.classList.add('row-fade-out');
+  slotEl.classList.add('col-fade-out');
   setTimeout(() => {
-    el.innerHTML = '';
-    photos.forEach(p => el.appendChild(makeCard(p)));
-    el.classList.remove('row-fade-out');
-    el.classList.add('row-fade-in');
-    setTimeout(() => el.classList.remove('row-fade-in'), FADE_MS);
+    slotEl.innerHTML = photo ? makeCard(photo).innerHTML : '';
+    slotEl.classList.remove('col-fade-out');
   }, FADE_MS);
-}
-
-function getSlice(offset, count) {
-  if (!allPhotos.length) return [];
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    out.push(allPhotos[(offset + i) % allPhotos.length]);
-  }
-  return out;
 }
 
 async function fetchPhotos() {
@@ -48,44 +35,54 @@ async function fetchPhotos() {
 }
 
 async function init() {
-  const rowLatest    = document.getElementById('row-latest');
-  const rowSlideshow = document.getElementById('row-slideshow');
-  const photoCount   = document.getElementById('photo-count');
+  const slots      = Array.from({ length: 6 }, (_, i) => document.getElementById(`slot-${i}`));
+  const photoCount = document.getElementById('photo-count');
 
-  function refreshLatest() {
-    const latest = allPhotos.slice(0, ROW_COLS);
-    const key    = latest.map(p => p.filename).join(',');
-    if (key === latestKey) return;
-    latestKey = key;
-    renderRow(rowLatest, latest, true);
+  function updateCount() {
     const n = allPhotos.length;
     photoCount.textContent = `${n} photo${n !== 1 ? 's' : ''}`;
   }
 
-  function refreshSlideshow(animate = false) {
-    renderRow(rowSlideshow, getSlice(slideshowIndex, ROW_COLS), animate);
+  // Slot 0: always the most recent photo; only redraws on a new capture
+  function refreshLatest(animate = false) {
+    const latest = allPhotos[0] ?? null;
+    const key    = latest?.filename ?? '';
+    if (key === latestKey) return;
+    latestKey = key;
+    setSlot(slots[0], latest, animate);
+    updateCount();
   }
 
-  // Initial load
+  // Slots 1–5: cycle through all photos
+  function refreshCycle(animate = false) {
+    if (!allPhotos.length) return;
+    for (let i = 0; i < 5; i++) {
+      const photo = allPhotos[(cycleIndex + i) % allPhotos.length];
+      setSlot(slots[i + 1], photo, animate);
+    }
+  }
+
+  // Initial fill — no animation on first render
   try { allPhotos = await fetchPhotos(); } catch (_) {}
   refreshLatest();
-  refreshSlideshow();
+  cycleIndex = Math.min(1, allPhotos.length - 1); // start cycle one step ahead
+  refreshCycle();
 
-  // Row 1: poll for new captures
+  // Poll for new captures (slot 0 only)
   async function pollLatest() {
     try {
       allPhotos = await fetchPhotos();
-      refreshLatest();
+      refreshLatest(true);
     } catch (_) {}
     setTimeout(pollLatest, POLL_MS);
   }
   setTimeout(pollLatest, POLL_MS);
 
-  // Row 2: advance slideshow
+  // Advance slideshow every 15 s (slots 1–5)
   setInterval(() => {
     if (!allPhotos.length) return;
-    slideshowIndex = (slideshowIndex + ROW_COLS) % allPhotos.length;
-    refreshSlideshow(true);
+    cycleIndex = (cycleIndex + 5) % allPhotos.length;
+    refreshCycle(true);
   }, SLIDE_MS);
 }
 
