@@ -1,3 +1,54 @@
+/* ── Section divider ── */
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.2rem 0;
+  opacity: 1;
+}
+
+/* ── Photo label editor ── */
+.label-editor {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.label-input {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.4rem 0.75rem;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.label-input:focus { border-color: var(--accent); }
+.label-input::placeholder { color: var(--muted); font-style: italic; }
+.label-save-btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.label-save-btn:hover { color: var(--accent); border-color: var(--accent); }
+.label-hint {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+}
+
 /* ── Event selector ── */
 .event-grid {
   display: flex;

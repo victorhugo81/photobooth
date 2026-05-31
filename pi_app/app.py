@@ -183,6 +183,23 @@ def create_app() -> Flask:
         r, g, b = color
         return jsonify({"color": f"#{r:02x}{g:02x}{b:02x}", "rgb": [r, g, b]})
 
+    @app.route("/api/label", methods=["GET"])
+    def get_label():
+        try:
+            data = json.loads((Path(app.root_path) / "label.json").read_text())
+            return jsonify({"text": data.get("text", "PHOTOBOOTH")})
+        except Exception:
+            return jsonify({"text": "PHOTOBOOTH"})
+
+    @app.route("/api/label", methods=["POST"])
+    def set_label():
+        data = request.get_json(silent=True) or {}
+        text = data.get("text", "").strip()
+        if not text or len(text) > 80:
+            return jsonify({"error": "Label must be 1–80 characters"}), 400
+        (Path(app.root_path) / "label.json").write_text(json.dumps({"text": text}))
+        return jsonify({"text": text})
+
     @app.route("/capabilities")
     def capabilities():
         return jsonify({"rembg": rembg_available()})

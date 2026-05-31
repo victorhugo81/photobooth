@@ -8,9 +8,18 @@ The CSS live preview in index.html mirrors the visual style.
 from __future__ import annotations
 
 import datetime
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+
+
+def _get_img_label() -> str:
+    try:
+        data = json.loads((Path(__file__).parent / "label.json").read_text())
+        return data.get("text", "PHOTOBOOTH") or "PHOTOBOOTH"
+    except Exception:
+        return "PHOTOBOOTH"
 
 
 def _handwriting_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -55,9 +64,10 @@ def _apply_classic(img: Image.Image, frame_color: Color | None = None) -> Image.
     out = Image.new("RGB", (w + bx * 2, h + bt + bb), color)
     out.paste(img, (bx, bt))
 
+
     draw = ImageDraw.Draw(out)
     date_str = datetime.date.today().strftime("%B %d, %Y")
-    label = f"PHOTOBOOTH  |  {date_str}"
+    label = f"{_get_img_label()}  |  {date_str}"
     font_size = max(20, int(bb * 0.30))
     font = _handwriting_font(font_size)
     bbox = draw.textbbox((0, 0), label, font=font)

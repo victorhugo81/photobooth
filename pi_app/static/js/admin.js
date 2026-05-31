@@ -119,6 +119,29 @@ function toast(msg, type = 'success') {
 
 loadBackgrounds();
 loadEvent();
+loadLabel();
+
+async function loadLabel() {
+  try {
+    const resp = await fetch('/api/label');
+    const data = await resp.json();
+    document.getElementById('label-input').value = data.text;
+  } catch (_) {}
+}
+
+document.getElementById('label-save-btn').addEventListener('click', async () => {
+  const text = document.getElementById('label-input').value.trim();
+  if (!text) return;
+  try {
+    const resp = await fetch('/api/label', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (resp.ok) toast('Label saved', 'success');
+    else toast('Failed to save label', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
 
 async function loadEvent() {
   try {

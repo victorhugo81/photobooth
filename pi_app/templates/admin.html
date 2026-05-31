@@ -58,7 +58,24 @@
     </button>
   </div>
 
+  <hr class="section-divider">
+
+  <!-- Photo label editor -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading">Photo Label</span>
+  </div>
+  <div class="label-editor">
+    <input id="label-input" type="text" maxlength="80" placeholder="PHOTOBOOTH" class="label-input">
+    <button id="label-save-btn" class="label-save-btn">Save</button>
+  </div>
+  <p class="label-hint">Appears on every photo next to the date — e.g. "Victor's Wedding"</p>
+
+  <hr class="section-divider">
+
   <!-- Upload zone -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading">Upload Images</span>
+  </div>
   <div id="upload-zone" onclick="document.getElementById('file-input').click()">
     <div class="upload-icon">&#128247;</div>
     <h5>Drop images here or click to upload</h5>
@@ -74,7 +91,7 @@
   </div>
 
   <!-- Grid -->
-  <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading">Images</span>
     <span id="bg-count" style="font-size:0.75rem;color:#333"></span>
   </div>
