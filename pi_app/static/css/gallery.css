@@ -256,6 +256,25 @@ body.event-halloween {
   font-family: 'Pacifico', cursive;
   font-size: clamp(1.8rem, 6vw, 3.2rem);
   text-shadow: 2px 3px 0 var(--bg2), 3px 5px 8px var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+
+.title-icon {
+  font-size: 0.85em;
+  line-height: 1;
+  animation: icon-bob 2.4s ease-in-out infinite;
+  display: inline-block;
+}
+.title-icon:last-child {
+  animation-delay: 1.2s;
+}
+
+@keyframes icon-bob {
+  0%, 100% { transform: translateY(0)    rotate(-4deg); }
+  50%       { transform: translateY(-6px) rotate(4deg);  }
 }
 
 /* ── Section heading ── */

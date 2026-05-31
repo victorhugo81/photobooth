@@ -14,8 +14,24 @@
 <body class="event-{{ event }}">
 
 <header class="site-header">
+  {% set _icons = {
+    'default':        '📷',
+    'christmas':      '🎄',
+    'birthday':       '🎂',
+    'graduation':     '🎓',
+    'wedding':        '💐',
+    'girls_birthday': '🎀',
+    'boys_birthday':  '🚀',
+    'new_years':      '🎆',
+    'halloween':      '🎃'
+  } %}
+  {% set _icon = _icons.get(event, '📷') %}
   <div class="film-line"></div>
-  <div class="site-title">{{ img_label }}</div><br>
+  <div class="site-title">
+    <span class="title-icon">{{ _icon }}</span>
+    {{ img_label }}
+    <span class="title-icon">{{ _icon }}</span>
+  </div><br>
   <div class="site-subtitle">PHOTOBOOTH GALLERY</div>
   <div class="film-line bottom"></div>
 
