@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery — Photobooth</title>
+  <title>Live Show — Photobooth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pacifico&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/live-show.css') }}">
 </head>
 <body class="event-{{ event }} theme-{{ ui_theme }}">
 
@@ -32,58 +33,36 @@
     {{ img_label }}
     <span class="title-icon">{{ _icon }}</span>
   </div><br>
-  <div class="site-subtitle">PHOTO GALLERY</div>
+  <div class="site-subtitle">LIVE SHOW</div>
   <div class="film-line bottom"></div>
 
   <div class="header-actions">
-    <a href="/live-show">Live Show</a>
+    <a href="/gallery">Gallery</a>
     <a href="/">← Photobooth</a>
   </div>
 </header>
 
-<div class="container pb-5" style="max-width:1100px">
+<div class="container" style="max-width:900px">
 
-  <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-    <span class="section-heading">Captured Photos</span>
-    <span id="photo-count">{{ total }} photo{{ 's' if total != 1 else '' }}</span>
+  <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+    <span class="section-heading">Live Display</span>
+    <span id="photo-count" class="section-count"></span>
   </div>
 
-  {% if photos %}
-  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 gallery-grid">
-    {% for photo in photos %}
-    <div class="col">
-      <a class="photo-card"
-         href="{{ share_site_url }}/?f={{ photo.filename }}"
-         target="_blank" rel="noopener">
-        <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy">
-      </a>
-    </div>
-    {% endfor %}
+  <div id="photo-grid">
+    <div class="col" id="slot-0"></div>
+    <div class="col" id="slot-1"></div>
+    <div class="col" id="slot-2"></div>
+    <div class="col" id="slot-3"></div>
+    <div class="col" id="slot-4"></div>
+    <div class="col" id="slot-5"></div>
   </div>
-
-  {% if total_pages > 1 %}
-  <nav class="gallery-pagination mt-5 mb-2">
-    {% if page > 1 %}
-    <a href="?page={{ page - 1 }}" class="page-btn">← Prev</a>
-    {% else %}
-    <span class="page-btn disabled">← Prev</span>
-    {% endif %}
-
-    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-
-    {% if page < total_pages %}
-    <a href="?page={{ page + 1 }}" class="page-btn">Next →</a>
-    {% else %}
-    <span class="page-btn disabled">Next →</span>
-    {% endif %}
-  </nav>
-  {% endif %}
-
-  {% else %}
-  <p class="text-center mt-5" style="color:var(--muted);font-family:'Bebas Neue',sans-serif;letter-spacing:.1em">No photos yet</p>
-  {% endif %}
 
 </div>
 
+<script>
+  const SHARE_SITE_URL = "{{ share_site_url }}";
+</script>
+<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
 </body>
 </html>

@@ -301,9 +301,9 @@ body.event-halloween {
   color: var(--muted);
 }
 
-/* ── Scrapbook grid: extra row gap for tilted cards ── */
-#photo-grid {
-  row-gap: 2.8rem;
+/* ── Scrapbook grid: extra row gap for tape strips ── */
+.gallery-grid {
+  row-gap: 2.8rem !important;
 }
 
 /* ── Column: elevate on hover so card isn't clipped by siblings ── */
@@ -379,48 +379,35 @@ body.event-halloween {
 
 .photo-card-body { display: none; }
 
-/* ── Fit entire page to viewport with no scroll ── */
-html { height: 100%; }
-
-body {
-  height: 100%;
-  overflow: hidden;
+/* ── Pagination ── */
+.gallery-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
 }
 
-body > .container {
-  flex: 1;
-  min-height: 0;
-  display: flex !important;
-  flex-direction: column;
-  padding-bottom: 1rem !important;
-  overflow: visible;
+.page-btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 4px 14px;
+  transition: color 0.15s, border-color 0.15s;
+}
+a.page-btn:hover { color: var(--accent); border-color: var(--accent); }
+.page-btn.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
 }
 
-body > .container > .d-flex { flex-shrink: 0; }
-
-/* 3×2 photo grid filling remaining viewport height */
-#photo-grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  column-gap: 1rem;
-}
-
-#photo-grid > .col {
-  padding: 0 !important;
-  width: auto !important;
-  flex: none !important;
-  min-width: 0;
-}
-
-/* Per-slot fade when content changes */
-.col-fade-out { opacity: 0 !important; }
-
-/* Cards and images fill their grid cell */
-.photo-card { height: 100%; }
-
-.photo-card img {
-  height: 100% !important;
+.page-info {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
 }

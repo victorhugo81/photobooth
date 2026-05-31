@@ -107,19 +107,43 @@ def create_app() -> Flask:
 
     @app.route("/gallery")
     def gallery():
-        gallery_url = os.environ.get("PHOTOSLIDE_URL", "")
+        share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
+        event      = _get_event(app)
+        per_page   = 12
+        page       = max(1, request.args.get("page", 1, type=int))
+        try:
+            img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
+        except Exception:
+            img_label = "PHOTOBOOTH"
+        with _Session() as session:
+            total       = session.query(Photo).count()
+            total_pages = max(1, (total + per_page - 1) // per_page)
+            page        = min(page, total_pages)
+            rows        = (session.query(Photo)
+                           .order_by(Photo.timestamp.desc())
+                           .offset((page - 1) * per_page)
+                           .limit(per_page)
+                           .all())
+            photos_data = [p.to_dict() for p in rows]
+        return render_template("gallery.html",
+                               photos=photos_data,
+                               share_site_url=share_site_url,
+                               event=event,
+                               img_label=img_label,
+                               ui_theme=_get_ui_theme(app),
+                               page=page,
+                               total_pages=total_pages,
+                               total=total)
+
+    @app.route("/live-show")
+    def live_show():
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
         event = _get_event(app)
         try:
             img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
         except Exception:
             img_label = "PHOTOBOOTH"
-        with _Session() as session:
-            rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(200).all()
-            photos_data = [p.to_dict() for p in rows]
-        return render_template("gallery.html",
-                               photos=photos_data,
-                               gallery_url=gallery_url,
+        return render_template("live-show.html",
                                share_site_url=share_site_url,
                                event=event,
                                img_label=img_label,
