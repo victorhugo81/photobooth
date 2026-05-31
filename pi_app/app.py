@@ -37,16 +37,20 @@ _VALID_EVENTS = {
 }
 
 
+def _data_dir(app: Flask) -> Path:
+    return Path(app.root_path) / "templates" / "data"
+
+
 def _get_event(app: Flask) -> str:
     try:
-        data = json.loads((Path(app.root_path) / "event.json").read_text())
+        data = json.loads((_data_dir(app) / "event.json").read_text())
         return data.get("event", "default")
     except Exception:
         return "default"
 
 
 def _set_event(app: Flask, event: str) -> None:
-    (Path(app.root_path) / "event.json").write_text(json.dumps({"event": event}))
+    (_data_dir(app) / "event.json").write_text(json.dumps({"event": event}))
 
 
 def create_app() -> Flask:
@@ -55,9 +59,10 @@ def create_app() -> Flask:
     app = Flask(__name__)
 
     # Ensure runtime directories exist
-    photos_dir = Path(app.root_path) / "photos"
+    photos_dir = Path(app.root_path) / "templates" / "photos"
     qr_dir = Path(app.root_path) / "static" / "qr_codes"
-    photos_dir.mkdir(exist_ok=True)
+    _data_dir(app).mkdir(parents=True, exist_ok=True)
+    photos_dir.mkdir(parents=True, exist_ok=True)
     qr_dir.mkdir(parents=True, exist_ok=True)
 
     # SQLite via plain SQLAlchemy (works inside and outside request context)
@@ -92,7 +97,7 @@ def create_app() -> Flask:
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
         event = _get_event(app)
         try:
-            img_label = json.loads((Path(app.root_path) / "label.json").read_text()).get("text", "PHOTOBOOTH")
+            img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
         except Exception:
             img_label = "PHOTOBOOTH"
         with _Session() as session:
@@ -194,7 +199,7 @@ def create_app() -> Flask:
     @app.route("/api/label", methods=["GET"])
     def get_label():
         try:
-            data = json.loads((Path(app.root_path) / "label.json").read_text())
+            data = json.loads((_data_dir(app) / "label.json").read_text())
             return jsonify({"text": data.get("text", "PHOTOBOOTH")})
         except Exception:
             return jsonify({"text": "PHOTOBOOTH"})
@@ -205,7 +210,7 @@ def create_app() -> Flask:
         text = data.get("text", "").strip()
         if not text or len(text) > 80:
             return jsonify({"error": "Label must be 1–80 characters"}), 400
-        (Path(app.root_path) / "label.json").write_text(json.dumps({"text": text}))
+        (_data_dir(app) / "label.json").write_text(json.dumps({"text": text}))
         return jsonify({"text": text})
 
     @app.route("/capabilities")
@@ -233,7 +238,7 @@ def _run_capture(
 
     now = datetime.datetime.utcnow()
     filename = f"photo_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
-    local_path = Path(app.root_path) / "photos" / filename
+    local_path = Path(app.root_path) / "templates" / "photos" / filename
 
     # 1. Capture still image
     _camera.capture_photo(str(local_path))

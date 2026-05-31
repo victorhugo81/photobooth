@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 def _get_img_label() -> str:
     try:
-        data = json.loads((Path(__file__).parent / "label.json").read_text())
+        data = json.loads((Path(__file__).parent / "templates" / "data" / "label.json").read_text())
         return data.get("text", "PHOTOBOOTH") or "PHOTOBOOTH"
     except Exception:
         return "PHOTOBOOTH"
