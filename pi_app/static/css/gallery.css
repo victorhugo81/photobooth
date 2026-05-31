@@ -1,4 +1,4 @@
-/* ── Event theme overrides (override main.css :root vars per body class) ── */
+/* ── Event theme variable overrides ─────────────────────────────────────── */
 
 body.event-christmas {
   --bg:      #fdf5f0;
@@ -9,7 +9,14 @@ body.event-christmas {
   --border:  #c89090;
   --muted:   #8a5050;
   --paper:   #fff8f5;
-  --shadow:  rgba(80, 10, 10, 0.15);
+  --shadow:  rgba(80, 10, 10, 0.22);
+  background-color: #fdf5f0;
+  background-image:
+    radial-gradient(circle, rgba(176,26,26,0.10) 1px, transparent 1px),
+    radial-gradient(circle, rgba(42,110,42,0.10) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, rgba(176,26,26,0.07) 0%, transparent 55%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+  background-position: 0 0, 12px 12px, 0 0;
 }
 
 body.event-birthday {
@@ -21,11 +28,18 @@ body.event-birthday {
   --border:  #d4a8d4;
   --muted:   #8a5a80;
   --paper:   #fffaff;
-  --shadow:  rgba(80, 10, 60, 0.15);
+  --shadow:  rgba(80, 10, 60, 0.22);
+  background-color: #fdf4ff;
+  background-image:
+    radial-gradient(circle, rgba(155,28,110,0.10) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(212,130,10,0.10) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(80,160,80,0.07) 1.5px, transparent 1.5px);
+  background-size: 18px 18px, 18px 18px, 18px 18px;
+  background-position: 0 0, 9px 9px, 4px 13px;
 }
 
 body.event-graduation {
-  --bg:      #f4f6fa;
+  --bg:      #eef2f8;
   --bg2:     #d8e0f0;
   --text:    #0a1528;
   --accent:  #1a3a72;
@@ -33,7 +47,20 @@ body.event-graduation {
   --border:  #8a9fc0;
   --muted:   #5a6a8a;
   --paper:   #f8faff;
-  --shadow:  rgba(10, 20, 60, 0.15);
+  --shadow:  rgba(10, 20, 60, 0.22);
+  background-color: #eef2f8;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 38px,
+      rgba(26,58,114,0.05) 38px, rgba(26,58,114,0.05) 39px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 38px,
+      rgba(184,134,11,0.05) 38px, rgba(184,134,11,0.05) 39px
+    ),
+    linear-gradient(175deg, rgba(26,58,114,0.08) 0%, transparent 40%);
 }
 
 body.event-wedding {
@@ -45,7 +72,14 @@ body.event-wedding {
   --border:  #d4b0c8;
   --muted:   #9a7088;
   --paper:   #fffaff;
-  --shadow:  rgba(60, 10, 50, 0.15);
+  --shadow:  rgba(60, 10, 50, 0.22);
+  background-color: #fdf8fc;
+  background-image:
+    radial-gradient(circle, rgba(192,144,90,0.12) 1px, transparent 1px),
+    radial-gradient(circle, rgba(122,48,96,0.08) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, rgba(192,144,90,0.10) 0%, transparent 50%);
+  background-size: 16px 16px, 16px 16px, 100% 100%;
+  background-position: 0 0, 8px 8px, 0 0;
 }
 
 /* ── Section heading ── */
@@ -56,38 +90,12 @@ body.event-wedding {
   color: var(--muted);
 }
 
-/* ── Photo cards ── */
-.photo-card {
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  cursor: pointer;
-  display: block;
-  text-decoration: none;
-}
-.photo-card:hover {
-  border-color: var(--accent);
-  box-shadow: 2px 2px 0 var(--bg2);
-  transform: scale(1.02);
-}
-.photo-card img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  display: block;
-}
-.photo-card-body {
-  padding: 0.45rem 0.6rem;
-  background: var(--bg);
-}
-.photo-date {
+/* ── Count badge ── */
+#photo-count {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-style: italic;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ── Empty state ── */
@@ -97,10 +105,80 @@ body.event-wedding {
   color: var(--muted);
 }
 
-/* ── Count badge ── */
-#photo-count {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--muted);
+/* ── Scrapbook grid: extra row gap for tilted cards ── */
+.row.row-cols-2 {
+  row-gap: 2.8rem !important;
 }
+
+/* ── Column: elevate on hover so card isn't clipped by siblings ── */
+.col {
+  position: relative;
+  transition: z-index 0s 0.25s;
+}
+.col:hover {
+  z-index: 20;
+  transition: z-index 0s;
+}
+
+/* ── Scrapbook photo card ── */
+.photo-card {
+  display: block;
+  text-decoration: none;
+  position: relative;
+  background: #fff;
+  border: none;
+  border-radius: 1px;
+  padding: 8px 8px 0;   /* white frame: top + sides only */
+  overflow: visible;
+  cursor: pointer;
+  transform-origin: center 85%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow:
+    2px 4px 8px  rgba(0,0,0,0.18),
+    0  1px 3px   rgba(0,0,0,0.10);
+}
+
+/* ── Tape strip ── */
+.photo-card::before {
+  content: '';
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 58px;
+  height: 20px;
+  background: rgba(255, 253, 210, 0.78);
+  border: 1px solid rgba(190, 175, 110, 0.30);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+  z-index: 2;
+}
+
+/* Vary tape angle per card */
+.col:nth-child(5n+1) .photo-card::before { transform: translateX(-50%) rotate(-2.5deg); }
+.col:nth-child(5n+2) .photo-card::before { transform: translateX(-50%) rotate( 1.8deg); }
+.col:nth-child(5n+3) .photo-card::before { transform: translateX(-50%) rotate(-3.5deg); }
+.col:nth-child(5n+4) .photo-card::before { transform: translateX(-50%) rotate( 2.2deg); }
+.col:nth-child(5n+5) .photo-card::before { transform: translateX(-50%) rotate(-1.2deg); }
+
+/* Alternating card tilts */
+.col:nth-child(5n+1) .photo-card { transform: rotate(-3.2deg); }
+.col:nth-child(5n+2) .photo-card { transform: rotate( 2.5deg); }
+.col:nth-child(5n+3) .photo-card { transform: rotate(-1.6deg); }
+.col:nth-child(5n+4) .photo-card { transform: rotate( 3.1deg); }
+.col:nth-child(5n+5) .photo-card { transform: rotate(-2.4deg); }
+
+/* Lift and straighten on hover */
+.photo-card:hover {
+  transform: rotate(0deg) scale(1.07) !important;
+  box-shadow:
+    6px 14px 28px rgba(0,0,0,0.28),
+    0   3px  6px  rgba(0,0,0,0.14);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-card-body { display: none; }

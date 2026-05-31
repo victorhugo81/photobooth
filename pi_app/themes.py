@@ -49,8 +49,8 @@ def _apply_classic(img: Image.Image, frame_color: Color | None = None) -> Image.
     color = (255, 255, 255)
     w, h = img.size
     bx = int(w * 0.03)
-    bt = int(h * 0.03)
-    bb = int(h * 0.15)
+    bt = int(h * 0.04)
+    bb = int(h * 0.20)
 
     out = Image.new("RGB", (w + bx * 2, h + bt + bb), color)
     out.paste(img, (bx, bt))

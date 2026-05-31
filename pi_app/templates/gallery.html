@@ -23,7 +23,6 @@
     {% if gallery_url %}
     <a href="{{ gallery_url }}" target="_blank" rel="noopener">Slideshow</a>
     {% endif %}
-    <a href="/admin">Backgrounds</a>
     <a href="/">Photobooth</a>
   </div>
 </header>
@@ -43,9 +42,7 @@
          href="{{ share_site_url }}/?f={{ photo.filename }}"
          target="_blank" rel="noopener">
         <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy">
-        <div class="photo-card-body">
-          <div class="photo-date">{{ photo.timestamp[:16].replace('T', ' ') }}</div>
-        </div>
+
       </a>
     </div>
     {% endfor %}
