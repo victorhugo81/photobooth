@@ -54,7 +54,7 @@ def _s3_client():
     )
 
 
-def upload_photo(local_path: str, filename: str) -> str:
+def upload_photo(local_path: str, r2_key: str) -> str:
     """Upload a JPEG file to R2. Returns the public URL."""
     bucket = os.environ["R2_BUCKET_NAME"]
     r2_public_url = os.environ["R2_PUBLIC_URL"].rstrip("/")
@@ -64,14 +64,14 @@ def upload_photo(local_path: str, filename: str) -> str:
         client.upload_file(
             local_path,
             bucket,
-            filename,
+            r2_key,
             ExtraArgs={"ContentType": "image/jpeg"},
         )
-        public_url = f"{r2_public_url}/{filename}"
-        logger.info("Uploaded %s → %s", filename, public_url)
+        public_url = f"{r2_public_url}/{r2_key}"
+        logger.info("Uploaded %s → %s", r2_key, public_url)
         return public_url
     except (BotoCoreError, ClientError) as exc:
-        logger.exception("R2 upload failed for %s", filename)
+        logger.exception("R2 upload failed for %s", r2_key)
         raise RuntimeError(f"Upload failed: {exc}") from exc
 
 

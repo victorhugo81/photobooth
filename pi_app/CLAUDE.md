@@ -51,6 +51,8 @@ full-screen live-show display page.
 | POST   | `/api/qr-url`           | Set QR code URL                                          |
 | GET    | `/api/ui-theme`         | Get active UI theme                                      |
 | POST   | `/api/ui-theme`         | Set UI theme                                             |
+| GET    | `/api/date-filter`      | Get active date filter (`{"date":"YYYY-MM-DD"}` or null) |
+| POST   | `/api/date-filter`      | Set date filter (`{"date":"YYYY-MM-DD"}` or `null`)      |
 | GET    | `/qr-image`             | Serve QR code as PNG (generated in memory)               |
 | GET    | `/status`               | JSON of the last capture result                          |
 | GET    | `/capabilities`         | JSON of available features (e.g. rembg)                  |
@@ -167,11 +169,12 @@ restores all data files from R2 so settings survive Pi reboots and redeployments
 
 | File            | Contents                        |
 |-----------------|---------------------------------|
-| `event.json`    | `{ "event": "default" }`        |
-| `label.json`    | `{ "text": "PHOTOBOOTH" }`      |
-| `ui_theme.json` | `{ "theme": "dark" }`           |
-| `qr_url.json`   | `{ "url": "" }`                 |
-| `photos.json`   | `["photo_….jpg", …]` (newest first) |
+| `event.json`       | `{ "event": "default" }`                     |
+| `label.json`       | `{ "text": "PHOTOBOOTH" }`                   |
+| `ui_theme.json`    | `{ "theme": "dark" }`                        |
+| `qr_url.json`      | `{ "url": "" }`                              |
+| `date_filter.json` | `{ "date": "YYYY-MM-DD" }` or `{"date": null}` |
+| `photos.json`      | `["YYYY-MM-DD/photo_….jpg", …]` (newest first) |
 
 ## R2 Storage Layout
 
@@ -182,13 +185,15 @@ restores all data files from R2 so settings survive Pi reboots and redeployments
 │   ├── label.json
 │   ├── ui_theme.json
 │   ├── qr_url.json
-│   └── photos.json          Flat JSON array of filenames, newest first
-├── photo_YYYYMMDD_HHMMSS.jpg  Captured photos (with theme applied)
-└── ...
+│   └── photos.json          Flat JSON array of keys ("YYYY-MM-DD/photo_….jpg"), newest first
+└── YYYY-MM-DD/
+    └── photo_YYYYMMDD_HHMMSS.jpg  Captured photos organised by capture date
 ```
 
-> **Note:** `photos.json` moved from the bucket root to `data/photos.json`.
-> Update any external share-site or slideshow clients to fetch from the new path.
+Photos are stored under a `YYYY-MM-DD/` prefix matching their UTC capture date.
+`photos.json` entries and the SQLite `filename` column store the full key
+(e.g. `2024-06-01/photo_20240601_143022.jpg`). The `r2_url` and `share_url`
+`?f=` parameter both include the date prefix.
 
 ## Live Show Page (`/live-show`)
 

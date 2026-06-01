@@ -45,7 +45,7 @@
 <div class="container pb-5" style="max-width:1100px">
 
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-    <span class="section-heading">Captured Photos</span>
+    <span class="section-heading">Captured Photos{% if date_filter %} &mdash; {{ date_filter }}{% endif %}</span>
     <span id="photo-count">{{ total }} photo{{ 's' if total != 1 else '' }}</span>
   </div>
 

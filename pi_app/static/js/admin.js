@@ -121,6 +121,7 @@ loadBackgrounds();
 loadEvent();
 loadLabel();
 loadQrUrl();
+loadDateFilter();
 loadUiTheme();
 
 async function loadQrUrl() {
@@ -141,6 +142,47 @@ document.getElementById('qr-url-save-btn').addEventListener('click', async () =>
     });
     if (resp.ok) toast('QR URL saved', 'success');
     else toast('Failed to save QR URL', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
+
+async function loadDateFilter() {
+  try {
+    const resp = await fetch('/api/date-filter');
+    const data = await resp.json();
+    setDateFilterUI(data.date);
+  } catch (_) {}
+}
+
+function setDateFilterUI(date) {
+  const input  = document.getElementById('date-filter-input');
+  const status = document.getElementById('date-filter-status');
+  input.value  = date || '';
+  status.textContent = date ? `Filtered: ${date}` : 'Showing all dates';
+}
+
+document.getElementById('date-filter-save-btn').addEventListener('click', async () => {
+  const date = document.getElementById('date-filter-input').value;
+  if (!date) { toast('Pick a date first', 'error'); return; }
+  try {
+    const resp = await fetch('/api/date-filter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date }),
+    });
+    if (resp.ok) { setDateFilterUI(date); toast(`Filter set: ${date}`, 'success'); }
+    else toast('Failed to set date filter', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
+
+document.getElementById('date-filter-clear-btn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch('/api/date-filter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: null }),
+    });
+    if (resp.ok) { setDateFilterUI(null); toast('Date filter cleared', 'success'); }
+    else toast('Failed to clear date filter', 'error');
   } catch (_) { toast('Network error', 'error'); }
 });
 

@@ -39,7 +39,7 @@ _VALID_EVENTS = {
 
 _VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
-_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json")
+_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json")
 
 
 def _data_dir(app: Flask) -> Path:
@@ -113,6 +113,20 @@ def _set_qr_url(app: Flask, url: str) -> None:
     _sync_to_r2("qr_url.json", content)
 
 
+def _get_date_filter(app: Flask) -> str | None:
+    try:
+        data = json.loads((_data_dir(app) / "date_filter.json").read_text())
+        return data.get("date") or None
+    except Exception:
+        return None
+
+
+def _set_date_filter(app: Flask, date: str | None) -> None:
+    content = json.dumps({"date": date})
+    (_data_dir(app) / "date_filter.json").write_text(content)
+    _sync_to_r2("date_filter.json", content)
+
+
 def create_app() -> Flask:
     load_dotenv()
 
@@ -157,22 +171,28 @@ def create_app() -> Flask:
     @app.route("/gallery")
     def gallery():
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
-        event      = _get_event(app)
-        per_page   = 12
-        page       = max(1, request.args.get("page", 1, type=int))
+        event       = _get_event(app)
+        date_filter = _get_date_filter(app)
+        per_page    = 12
+        page        = max(1, request.args.get("page", 1, type=int))
         try:
             img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
         except Exception:
             img_label = "PHOTOBOOTH"
         with _Session() as session:
-            total       = session.query(Photo).count()
+            q = session.query(Photo)
+            if date_filter:
+                d     = datetime.date.fromisoformat(date_filter)
+                start = datetime.datetime(d.year, d.month, d.day)
+                end   = start + datetime.timedelta(days=1)
+                q = q.filter(Photo.timestamp >= start, Photo.timestamp < end)
+            total       = q.count()
             total_pages = max(1, (total + per_page - 1) // per_page)
             page        = min(page, total_pages)
-            rows        = (session.query(Photo)
-                           .order_by(Photo.timestamp.desc())
-                           .offset((page - 1) * per_page)
-                           .limit(per_page)
-                           .all())
+            rows        = (q.order_by(Photo.timestamp.desc())
+                            .offset((page - 1) * per_page)
+                            .limit(per_page)
+                            .all())
             photos_data = [p.to_dict() for p in rows]
         return render_template("gallery.html",
                                photos=photos_data,
@@ -182,7 +202,8 @@ def create_app() -> Flask:
                                ui_theme=_get_ui_theme(app),
                                page=page,
                                total_pages=total_pages,
-                               total=total)
+                               total=total,
+                               date_filter=date_filter)
 
     @app.route("/live-show")
     def live_show():
@@ -353,10 +374,33 @@ def create_app() -> Flask:
         _set_ui_theme(app, theme)
         return jsonify({"theme": theme})
 
+    @app.route("/api/date-filter", methods=["GET"])
+    def get_date_filter_route():
+        return jsonify({"date": _get_date_filter(app)})
+
+    @app.route("/api/date-filter", methods=["POST"])
+    def set_date_filter_route():
+        data = request.get_json(silent=True) or {}
+        date = data.get("date") or None
+        if date:
+            try:
+                datetime.date.fromisoformat(date)
+            except ValueError:
+                return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
+        _set_date_filter(app, date)
+        return jsonify({"date": date})
+
     @app.route("/api/photos")
     def api_photos():
+        date_filter = _get_date_filter(app)
         with _Session() as session:
-            rows = session.query(Photo).order_by(Photo.timestamp.desc()).limit(500).all()
+            q = session.query(Photo)
+            if date_filter:
+                d     = datetime.date.fromisoformat(date_filter)
+                start = datetime.datetime(d.year, d.month, d.day)
+                end   = start + datetime.timedelta(days=1)
+                q = q.filter(Photo.timestamp >= start, Photo.timestamp < end)
+            rows = q.order_by(Photo.timestamp.desc()).limit(500).all()
             return jsonify([p.to_dict() for p in rows])
 
     @app.route("/capabilities")
@@ -383,8 +427,11 @@ def _run_capture(
     global _last_status
 
     now = datetime.datetime.utcnow()
-    filename = f"photo_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
-    local_path = Path(app.root_path) / "templates" / "photos" / filename
+    date_dir  = now.strftime('%Y-%m-%d')
+    filename  = f"photo_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
+    r2_key    = f"{date_dir}/{filename}"
+    local_path = Path(app.root_path) / "templates" / "photos" / date_dir / filename
+    local_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 1. Capture still image
     _camera.capture_photo(str(local_path))
@@ -410,31 +457,31 @@ def _run_capture(
         logger.info("Applied theme '%s' (frame_color=%s) to %s", theme_id, frame_color, filename)
 
     # 4. Upload to Cloudflare R2
-    r2_url = upload_photo(str(local_path), filename)
+    r2_url = upload_photo(str(local_path), r2_key)
     local_photos_json = str(_data_dir(app) / "photos.json")
-    update_photos_json(filename, local_path=local_photos_json)
+    update_photos_json(r2_key, local_path=local_photos_json)
 
     # 5. Generate QR code pointing at the share page
     share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
-    share_url = f"{share_site_url}/?f={filename}"
+    share_url = f"{share_site_url}/?f={r2_key}"
     qr_filename = f"qr_{filename.replace('.jpg', '.png')}"
     qr_path = Path(app.root_path) / "static" / "qr_codes" / qr_filename
     generate_qr(share_url, str(qr_path))
 
     # 6. Persist to SQLite
     with _Session() as session:
-        session.add(Photo(filename=filename, r2_url=r2_url, timestamp=now))
+        session.add(Photo(filename=r2_key, r2_url=r2_url, timestamp=now))
         session.commit()
 
     result = {
-        "filename": filename,
+        "filename": r2_key,
         "r2_url": r2_url,
         "share_url": share_url,
         "qr_url": f"/static/qr_codes/{qr_filename}",
         "timestamp": now.isoformat() + "Z",
     }
     _last_status = result
-    logger.info("Capture complete: %s", filename)
+    logger.info("Capture complete: %s", r2_key)
     return result
 
 
