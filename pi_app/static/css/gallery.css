@@ -400,6 +400,19 @@ body.event-fourth_of_july {
 }
 
 .photo-card-body { display: none; }
+.photo-card-body:not(:empty) {
+  display: block;
+  padding: 0.35rem 0.5rem 0.45rem;
+  background: #fff;
+}
+
+.photo-date {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.65rem;
+  font-style: italic;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ── Pagination ── */
 .gallery-pagination {

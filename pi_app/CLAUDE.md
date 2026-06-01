@@ -2,7 +2,8 @@
 
 Flask app that runs on a Raspberry Pi. Controls the camera, applies photo frame
 themes, uploads photos to Cloudflare R2, generates a QR code, and displays a
-live MJPEG preview.
+live MJPEG preview. Includes a full admin UI, a paginated gallery, and a
+full-screen live-show display page.
 
 ## Tech Stack
 
@@ -21,15 +22,40 @@ live MJPEG preview.
 
 ## Routes
 
-| Method | Path          | Description                                               |
-|--------|---------------|-----------------------------------------------------------|
-| GET    | `/`           | Main UI — live preview, theme picker, capture button      |
-| GET    | `/video_feed` | MJPEG stream (multipart/x-mixed-replace)                  |
-| POST   | `/capture`    | Trigger countdown → capture → theme → upload → QR; JSON   |
-| GET    | `/themes`     | JSON list of available themes with id, name, preview      |
-| GET    | `/status`     | JSON of the last capture result                           |
+### Pages
 
-`/capture` accepts JSON body: `{ "theme": "classic" }` (default `"none"`).
+| Method | Path          | Description                                                        |
+|--------|---------------|--------------------------------------------------------------------|
+| GET    | `/`           | Main UI — live preview, background picker, capture button          |
+| GET    | `/admin`      | Settings — event type, photo label, QR URL, UI theme, backgrounds |
+| GET    | `/gallery`    | Paginated photo gallery (12 per page, scrapbook card style)        |
+| GET    | `/live-show`  | Full-screen live display — 6 dynamic slots, cycling slideshow      |
+
+### API
+
+| Method | Path                    | Description                                              |
+|--------|-------------------------|----------------------------------------------------------|
+| GET    | `/video_feed`           | MJPEG stream (multipart/x-mixed-replace)                 |
+| POST   | `/capture`              | Trigger capture → theme → upload → QR; returns JSON      |
+| GET    | `/themes`               | JSON list of available photo frame themes                |
+| GET    | `/backgrounds`          | JSON list of uploaded background images                  |
+| POST   | `/backgrounds/upload`   | Upload a new background image                            |
+| DELETE | `/backgrounds/<id>`     | Delete a background image                                |
+| GET    | `/backgrounds/<id>/color` | Dominant colour of a background                        |
+| GET    | `/api/photos`           | JSON array of all photos, newest first                   |
+| GET    | `/api/event`            | Get current event type                                   |
+| POST   | `/api/event`            | Set event type                                           |
+| GET    | `/api/label`            | Get photo label text                                     |
+| POST   | `/api/label`            | Set photo label text                                     |
+| GET    | `/api/qr-url`           | Get QR code URL                                          |
+| POST   | `/api/qr-url`           | Set QR code URL                                          |
+| GET    | `/api/ui-theme`         | Get active UI theme                                      |
+| POST   | `/api/ui-theme`         | Set UI theme                                             |
+| GET    | `/qr-image`             | Serve QR code as PNG (generated in memory)               |
+| GET    | `/status`               | JSON of the last capture result                          |
+| GET    | `/capabilities`         | JSON of available features (e.g. rembg)                  |
+
+`/capture` accepts JSON body: `{ "theme": "classic", "background": "none", "removal": "greenscreen" }`.
 
 ## Environment Variables (copy `.env.example` → `.env`)
 
@@ -84,42 +110,129 @@ uv run gunicorn "app:create_app()" --bind 0.0.0.0:5000 --workers 1 --threads 4
 Themes are applied **after** capture and **before** R2 upload via Pillow compositing
 in `themes.py`. The UI shows a live CSS preview of the selected theme on the video wrapper.
 
-| ID         | Name      | Effect                                                    |
-|------------|-----------|-----------------------------------------------------------|
-| `none`     | Original  | No modification                                           |
+| ID         | Name      | Effect                                                      |
+|------------|-----------|-------------------------------------------------------------|
+| `none`     | Original  | No modification                                             |
 | `classic`  | Classic   | White polaroid border (wider at bottom, "PHOTOBOOTH" label) |
-| `birthday` | Birthday  | Rainbow stripe border (coral, yellow, green, blue, pink)  |
-| `vintage`  | Vintage   | Sepia + reduced contrast + warm brown border              |
+| `birthday` | Birthday  | Rainbow stripe border (coral, yellow, green, blue, pink)    |
+| `vintage`  | Vintage   | Sepia + reduced contrast + warm brown border                |
 
-To add a new theme: add a function in `themes.py` and register it in `THEMES`,
+To add a new frame theme: add a function in `themes.py`, register it in `THEMES`,
 then add a matching button + CSS class in `templates/index.html`.
+
+## Event Types
+
+Selected in admin. Controls the gallery/live-show background pattern and colour
+palette (`gallery.css` `body.event-*` overrides) and the header emoji icon.
+
+| Key              | Label          |
+|------------------|----------------|
+| `default`        | Default        |
+| `christmas`      | Christmas      |
+| `birthday`       | Birthday       |
+| `graduation`     | Graduation     |
+| `wedding`        | Wedding        |
+| `girls_birthday` | Girl's Birthday|
+| `boys_birthday`  | Boy's Birthday |
+| `new_years`      | New Year's     |
+| `halloween`      | Halloween      |
+| `fourth_of_july` | 4th of July    |
+
+To add a new event: add the key to `_VALID_EVENTS` in `app.py`, add a
+`body.event-<key>` block in `gallery.css`, add an icon entry in both
+`gallery.html` and `live-show.html`, and add a button + swatch in
+`admin.html` / `admin.css`.
+
+## UI Themes
+
+Selected in admin. Controls the overall colour palette for admin, gallery,
+and live-show pages via CSS custom properties in `main.css`.
+
+| Key          | Description                  |
+|--------------|------------------------------|
+| `dark`       | Dark grey (default)          |
+| `white`      | Clean white                  |
+| `luxury`     | Black with gold accents      |
+| `black-rose` | Dark with rose-pink accents  |
+
+To add a new UI theme: add a `body.theme-<key>` block in `main.css`, add the
+key to `_VALID_UI_THEMES` in `app.py`, and add a button + swatch in
+`admin.html` / `admin.css`.
+
+## Settings Persistence (data files)
+
+All settings are stored as JSON in `templates/data/` and synced to
+`data/<filename>` in the R2 bucket on every save. On startup, the app
+restores all data files from R2 so settings survive Pi reboots and redeployments.
+
+| File            | Contents                        |
+|-----------------|---------------------------------|
+| `event.json`    | `{ "event": "default" }`        |
+| `label.json`    | `{ "text": "PHOTOBOOTH" }`      |
+| `ui_theme.json` | `{ "theme": "dark" }`           |
+| `qr_url.json`   | `{ "url": "" }`                 |
+| `photos.json`   | `["photo_….jpg", …]` (newest first) |
 
 ## R2 Storage Layout
 
 ```
 <bucket>/
-├── photos.json          Flat JSON array of filenames, newest first
+├── data/
+│   ├── event.json
+│   ├── label.json
+│   ├── ui_theme.json
+│   ├── qr_url.json
+│   └── photos.json          Flat JSON array of filenames, newest first
 ├── photo_YYYYMMDD_HHMMSS.jpg  Captured photos (with theme applied)
 └── ...
 ```
 
-`photos.json` is updated on every capture. Format: `["photo_20260529_183704.jpg", ...]`
+> **Note:** `photos.json` moved from the bucket root to `data/photos.json`.
+> Update any external share-site or slideshow clients to fetch from the new path.
+
+## Live Show Page (`/live-show`)
+
+Full-screen 3×2 grid of photo cards with scrapbook styling (polaroid border,
+tape strip, random tilt). Powered by `gallery.js`.
+
+- **Slot 0** (top-left): always shows the most recent photo. Polls every 3 s
+  and updates with a 1.2 s fade only when a new capture is detected.
+- **Slots 1–5**: cycle through all photos in batches of 5, advancing every 15 s
+  with a fade transition.
+- **QR code overlay**: shown when a QR URL is configured in admin. Fixed to the
+  bottom-right corner on large screens (≥ 768 px); flows below the grid on
+  small screens so users can scroll to it.
 
 ## File Layout
 
 ```
 pi_app/
-├── app.py            Flask app factory + routes + GPIO listener
-├── camera.py         Camera class + mjpeg_generator()
-├── themes.py         Pillow frame compositing (4 themes)
-├── uploader.py       Cloudflare R2 upload + photos.json update
-├── qr_generator.py   QR PNG generation via qrcode[pil]
-├── models.py         SQLAlchemy Photo model + init_db()
+├── app.py              Flask app factory + routes + GPIO listener
+├── camera.py           Camera class + mjpeg_generator()
+├── themes.py           Pillow frame compositing
+├── uploader.py         R2 upload, photos.json update, data file sync
+├── qr_generator.py     QR PNG generation (file and in-memory)
+├── models.py           SQLAlchemy Photo model + init_db()
+├── backgrounds.py      Background image management
 ├── templates/
-│   └── index.html    Bootstrap 5 dark UI (theme picker + live preview)
+│   ├── index.html      Main photobooth UI
+│   ├── admin.html      Settings page
+│   ├── gallery.html    Paginated photo gallery
+│   ├── live-show.html  Full-screen live display
+│   └── data/           Persisted settings JSON files
 ├── static/
-│   └── qr_codes/     Generated QR PNGs (gitignored)
-├── photos/           Captured JPEGs (gitignored)
+│   ├── css/
+│   │   ├── main.css        Shared variables + header styles + UI themes
+│   │   ├── index.css       Photobooth main page styles
+│   │   ├── admin.css       Admin page styles
+│   │   ├── gallery.css     Gallery styles + event theme overrides
+│   │   └── live-show.css   Full-screen layout + QR overlay
+│   ├── js/
+│   │   ├── index.js        Capture flow, background picker, countdown
+│   │   ├── admin.js        Settings save/load, background upload
+│   │   └── gallery.js      Live-show polling + slideshow logic
+│   └── qr_codes/           Generated QR PNGs (gitignored)
+├── photos/             Captured JPEGs (gitignored)
 ├── .env.example
 └── pyproject.toml
 ```

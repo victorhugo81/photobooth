@@ -19,7 +19,7 @@ from backgrounds import (
     delete_background, get_dominant_color, rembg_available, save_background,
 )
 from themes import apply_theme, theme_list
-from uploader import update_photos_json, upload_photo
+from uploader import download_data_file, update_photos_json, upload_data_file, upload_photo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,9 +39,36 @@ _VALID_EVENTS = {
 
 _VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
+_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json")
+
 
 def _data_dir(app: Flask) -> Path:
     return Path(app.root_path) / "templates" / "data"
+
+
+def _sync_to_r2(filename: str, content: str) -> None:
+    """Best-effort upload of a data JSON file to R2. Never raises."""
+    if not os.environ.get("R2_ACCOUNT_ID"):
+        return
+    try:
+        upload_data_file(filename, content.encode())
+    except Exception:
+        logger.warning("Could not sync %s to R2", filename, exc_info=True)
+
+
+def _restore_data_from_r2(app: Flask) -> None:
+    """On startup, pull the latest settings from R2 and overwrite local copies."""
+    if not os.environ.get("R2_ACCOUNT_ID"):
+        return
+    data_dir = _data_dir(app)
+    for filename in _DATA_FILES:
+        try:
+            content = download_data_file(filename)
+            if content:
+                (data_dir / filename).write_bytes(content)
+                logger.info("Restored %s from R2", filename)
+        except Exception:
+            logger.warning("Could not restore %s from R2", filename, exc_info=True)
 
 
 def _get_event(app: Flask) -> str:
@@ -53,7 +80,9 @@ def _get_event(app: Flask) -> str:
 
 
 def _set_event(app: Flask, event: str) -> None:
-    (_data_dir(app) / "event.json").write_text(json.dumps({"event": event}))
+    content = json.dumps({"event": event})
+    (_data_dir(app) / "event.json").write_text(content)
+    _sync_to_r2("event.json", content)
 
 
 def _get_ui_theme(app: Flask) -> str:
@@ -65,7 +94,9 @@ def _get_ui_theme(app: Flask) -> str:
 
 
 def _set_ui_theme(app: Flask, theme: str) -> None:
-    (_data_dir(app) / "ui_theme.json").write_text(json.dumps({"theme": theme}))
+    content = json.dumps({"theme": theme})
+    (_data_dir(app) / "ui_theme.json").write_text(content)
+    _sync_to_r2("ui_theme.json", content)
 
 
 def _get_qr_url(app: Flask) -> str:
@@ -77,7 +108,9 @@ def _get_qr_url(app: Flask) -> str:
 
 
 def _set_qr_url(app: Flask, url: str) -> None:
-    (_data_dir(app) / "qr_url.json").write_text(json.dumps({"url": url}))
+    content = json.dumps({"url": url})
+    (_data_dir(app) / "qr_url.json").write_text(content)
+    _sync_to_r2("qr_url.json", content)
 
 
 def create_app() -> Flask:
@@ -91,6 +124,9 @@ def create_app() -> Flask:
     _data_dir(app).mkdir(parents=True, exist_ok=True)
     photos_dir.mkdir(parents=True, exist_ok=True)
     qr_dir.mkdir(parents=True, exist_ok=True)
+
+    # Restore settings from R2 so they survive Pi reboots / redeployments
+    _restore_data_from_r2(app)
 
     # SQLite via plain SQLAlchemy (works inside and outside request context)
     global _Session
@@ -164,8 +200,22 @@ def create_app() -> Flask:
                                qr_url=_get_qr_url(app))
 
     @app.route("/photos")
-    def photos_redirect():
-        return redirect("/gallery", 301)
+    def photos():
+        share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
+        event = _get_event(app)
+        try:
+            img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
+        except Exception:
+            img_label = "PHOTOBOOTH"
+        with _Session() as session:
+            rows = session.query(Photo).order_by(Photo.timestamp.desc()).all()
+            photos_data = [p.to_dict() for p in rows]
+        return render_template("photos.html",
+                               photos=photos_data,
+                               share_site_url=share_site_url,
+                               event=event,
+                               img_label=img_label,
+                               ui_theme=_get_ui_theme(app))
 
     @app.route("/api/event", methods=["GET"])
     def get_event_route():
@@ -263,7 +313,9 @@ def create_app() -> Flask:
         text = data.get("text", "").strip()
         if not text or len(text) > 80:
             return jsonify({"error": "Label must be 1–80 characters"}), 400
-        (_data_dir(app) / "label.json").write_text(json.dumps({"text": text}))
+        content = json.dumps({"text": text})
+        (_data_dir(app) / "label.json").write_text(content)
+        _sync_to_r2("label.json", content)
         return jsonify({"text": text})
 
     @app.route("/qr-image")
@@ -359,7 +411,8 @@ def _run_capture(
 
     # 4. Upload to Cloudflare R2
     r2_url = upload_photo(str(local_path), filename)
-    update_photos_json(filename)
+    local_photos_json = str(_data_dir(app) / "photos.json")
+    update_photos_json(filename, local_path=local_photos_json)
 
     # 5. Generate QR code pointing at the share page
     share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")

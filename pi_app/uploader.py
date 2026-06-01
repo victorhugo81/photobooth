@@ -7,7 +7,40 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 logger = logging.getLogger(__name__)
 
-_PHOTOS_JSON_KEY = "photos.json"
+_DATA_PREFIX     = "data/"
+_PHOTOS_JSON_KEY = f"{_DATA_PREFIX}photos.json"
+
+
+def upload_data_file(filename: str, content: bytes) -> None:
+    """Upload a settings JSON file to R2 under data/<filename>."""
+    bucket = os.environ["R2_BUCKET_NAME"]
+    try:
+        _s3_client().put_object(
+            Bucket=bucket,
+            Key=f"{_DATA_PREFIX}{filename}",
+            Body=content,
+            ContentType="application/json",
+            CacheControl="no-cache, no-store",
+        )
+        logger.info("Synced data/%s to R2", filename)
+    except (BotoCoreError, ClientError):
+        logger.warning("Failed to upload data/%s to R2", filename, exc_info=True)
+
+
+def download_data_file(filename: str) -> bytes | None:
+    """Download a settings JSON file from R2. Returns None if not found."""
+    bucket = os.environ["R2_BUCKET_NAME"]
+    try:
+        resp = _s3_client().get_object(Bucket=bucket, Key=f"{_DATA_PREFIX}{filename}")
+        return resp["Body"].read()
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] in ("NoSuchKey", "404"):
+            return None
+        logger.warning("Failed to download data/%s from R2", filename, exc_info=True)
+        return None
+    except (BotoCoreError, Exception):
+        logger.warning("Failed to download data/%s from R2", filename, exc_info=True)
+        return None
 
 
 def _s3_client():
@@ -42,8 +75,9 @@ def upload_photo(local_path: str, filename: str) -> str:
         raise RuntimeError(f"Upload failed: {exc}") from exc
 
 
-def update_photos_json(filename: str) -> None:
-    """Fetch photos.json from R2, prepend the new filename, and re-upload it."""
+def update_photos_json(filename: str, local_path: str | None = None) -> None:
+    """Fetch photos.json from R2, prepend the new filename, re-upload it,
+    and optionally write a local copy to *local_path*."""
     bucket = os.environ["R2_BUCKET_NAME"]
     client = _s3_client()
 
@@ -70,6 +104,14 @@ def update_photos_json(filename: str) -> None:
         Key=_PHOTOS_JSON_KEY,
         Body=body,
         ContentType="application/json",
-        CacheControl="no-cache",
+        CacheControl="no-cache, no-store",
     )
     logger.info("photos.json updated (%d entries)", len(photos))
+
+    if local_path:
+        try:
+            import pathlib
+            pathlib.Path(local_path).write_bytes(body)
+            logger.info("photos.json written locally to %s", local_path)
+        except Exception:
+            logger.warning("Failed to write local photos.json", exc_info=True)
