@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 
 from camera import Camera, mjpeg_generator
 from models import Photo, init_db
-from qr_generator import generate_qr
+from qr_generator import generate_qr, generate_qr_bytes
 from backgrounds import (
     apply_background, apply_background_ai, background_list,
     delete_background, get_dominant_color, rembg_available, save_background,
@@ -34,9 +34,10 @@ _capture_lock = threading.Lock()
 _VALID_EVENTS = {
     "default", "christmas", "birthday", "graduation", "wedding",
     "girls_birthday", "boys_birthday", "new_years", "halloween",
+    "fourth_of_july",
 }
 
-_VALID_UI_THEMES = {"dark", "white", "luxury"}
+_VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
 
 def _data_dir(app: Flask) -> Path:
@@ -65,6 +66,18 @@ def _get_ui_theme(app: Flask) -> str:
 
 def _set_ui_theme(app: Flask, theme: str) -> None:
     (_data_dir(app) / "ui_theme.json").write_text(json.dumps({"theme": theme}))
+
+
+def _get_qr_url(app: Flask) -> str:
+    try:
+        data = json.loads((_data_dir(app) / "qr_url.json").read_text())
+        return data.get("url", "")
+    except Exception:
+        return ""
+
+
+def _set_qr_url(app: Flask, url: str) -> None:
+    (_data_dir(app) / "qr_url.json").write_text(json.dumps({"url": url}))
 
 
 def create_app() -> Flask:
@@ -147,7 +160,8 @@ def create_app() -> Flask:
                                share_site_url=share_site_url,
                                event=event,
                                img_label=img_label,
-                               ui_theme=_get_ui_theme(app))
+                               ui_theme=_get_ui_theme(app),
+                               qr_url=_get_qr_url(app))
 
     @app.route("/photos")
     def photos_redirect():
@@ -251,6 +265,28 @@ def create_app() -> Flask:
             return jsonify({"error": "Label must be 1–80 characters"}), 400
         (_data_dir(app) / "label.json").write_text(json.dumps({"text": text}))
         return jsonify({"text": text})
+
+    @app.route("/qr-image")
+    def qr_image():
+        url = _get_qr_url(app)
+        if not url:
+            return "", 204
+        buf = generate_qr_bytes(url)
+        return Response(buf.getvalue(), mimetype="image/png",
+                        headers={"Cache-Control": "no-store"})
+
+    @app.route("/api/qr-url", methods=["GET"])
+    def get_qr_url_route():
+        return jsonify({"url": _get_qr_url(app)})
+
+    @app.route("/api/qr-url", methods=["POST"])
+    def set_qr_url_route():
+        data = request.get_json(silent=True) or {}
+        url = data.get("url", "").strip()
+        if len(url) > 512:
+            return jsonify({"error": "URL too long"}), 400
+        _set_qr_url(app, url)
+        return jsonify({"url": url})
 
     @app.route("/api/ui-theme", methods=["GET"])
     def get_ui_theme_route():

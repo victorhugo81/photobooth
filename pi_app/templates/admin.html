@@ -71,6 +71,10 @@
       <span class="event-swatch event-swatch-halloween"></span>
       <span class="event-label">Halloween</span>
     </button>
+    <button class="event-btn" data-event="fourth_of_july">
+      <span class="event-swatch event-swatch-fourth-of-july"></span>
+      <span class="event-label">4th of July</span>
+    </button>
   </div>
 
   <hr class="section-divider">
@@ -84,6 +88,18 @@
     <button id="label-save-btn" class="label-save-btn">Save</button>
   </div>
   <p class="label-hint">Appears on every photo next to the date — e.g. "Mikkel's Birthday"</p>
+
+  <hr class="section-divider">
+
+  <!-- QR Code URL -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading"><strong>QR Code URL</strong></span>
+  </div>
+  <div class="label-editor">
+    <input id="qr-url-input" type="url" maxlength="512" placeholder="https://…" class="label-input">
+    <button id="qr-url-save-btn" class="label-save-btn">Save</button>
+  </div>
+  <p class="label-hint">Displayed as a scannable QR code on the Live Show page. Leave blank to hide it.</p>
 
   <hr class="section-divider">
 
@@ -103,6 +119,10 @@
     <button class="event-btn theme-btn" data-theme="luxury">
       <span class="event-swatch theme-swatch-luxury"></span>
       <span class="event-label">Luxury</span>
+    </button>
+    <button class="event-btn theme-btn" data-theme="black-rose">
+      <span class="event-swatch theme-swatch-black-rose"></span>
+      <span class="event-label">Black Rose</span>
     </button>
   </div>
 

@@ -1,6 +1,6 @@
-const POLL_MS   = 3000;   // how often to check for a new capture (slot 0)
-const SLIDE_MS  = 15000;  // how often slots 1–5 cycle
-const FADE_MS   = 1200;   // fade duration — must match CSS transition
+const POLL_MS  = 3000;   // how often to check for a new capture (slot 0)
+const SLIDE_MS = 15000;  // how often slots 1–5 cycle
+const FADE_MS  = 1200;   // fade duration — must match CSS transition
 
 let allPhotos  = [];
 let cycleIndex = 0;   // start index for cycling slots 1–5
@@ -40,7 +40,7 @@ async function init() {
 
   function updateCount() {
     const n = allPhotos.length;
-    photoCount.textContent = `${n} photo${n !== 1 ? 's' : ''}`;
+    if (photoCount) photoCount.textContent = `${n} photo${n !== 1 ? 's' : ''}`;
   }
 
   // Slot 0: always the most recent photo; only redraws on a new capture
@@ -65,7 +65,7 @@ async function init() {
   // Initial fill — no animation on first render
   try { allPhotos = await fetchPhotos(); } catch (_) {}
   refreshLatest();
-  cycleIndex = Math.min(1, allPhotos.length - 1); // start cycle one step ahead
+  cycleIndex = Math.min(1, allPhotos.length - 1);
   refreshCycle();
 
   // Poll for new captures (slot 0 only)

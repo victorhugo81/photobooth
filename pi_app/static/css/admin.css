@@ -94,11 +94,13 @@
 .event-swatch-girls-birthday { background: #e0408a; }
 .event-swatch-boys-birthday  { background: #1c72c8; }
 .event-swatch-new-years      { background: #c8a800; }
-.event-swatch-halloween      { background: #c05200; }
+.event-swatch-halloween       { background: #c05200; }
+.event-swatch-fourth-of-july { background: #cc2200; border-color: #001f6e; }
 
-.theme-swatch-dark    { background: #1e1e1e; border-color: #555; }
-.theme-swatch-white   { background: #f3f3f3; border-color: #ccc; }
-.theme-swatch-luxury  { background: #d4af37; border-color: #8a6a00; }
+.theme-swatch-dark       { background: #1e1e1e; border-color: #555; }
+.theme-swatch-white      { background: #f3f3f3; border-color: #ccc; }
+.theme-swatch-luxury     { background: #d4af37; border-color: #8a6a00; }
+.theme-swatch-black-rose { background: #b76e79; border-color: #7f4b54; }
 
 .gallery-link {
   font-family: 'Bebas Neue', sans-serif;

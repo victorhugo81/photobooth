@@ -251,6 +251,28 @@ body.event-halloween {
     radial-gradient(ellipse at 100% 0%,   rgba(80,0,120,0.20)  0%, transparent 40%);
 }
 
+/* 4th of July — navy, red, gold fireworks */
+body.event-fourth_of_july {
+  --bg:      #0a1628;
+  --bg2:     #162040;
+  --text:    #f0f4ff;
+  --accent:  #0010f7;
+  --gold:    #f0c000;
+  --border:  #1e3a6e;
+  --muted:   #6080b0;
+  --paper:   #0e1e38;
+  --shadow:  rgba(200, 32, 0, 0.30);
+  background-color: #0a1628;
+  background-image:
+    radial-gradient(circle, rgba(240,192,0,0.28) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1px),
+    radial-gradient(ellipse at 50%   0%,  rgba(204,34,0,0.40)  0%, transparent 50%),
+    radial-gradient(ellipse at 0%   50%,  rgba(204,34,0,0.20)  0%, transparent 40%),
+    radial-gradient(ellipse at 100% 50%,  rgba(240,192,0,0.22) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 100%,  rgba(204,34,0,0.28)  0%, transparent 45%);
+  background-size: 28px 28px, 48px 48px, auto, auto, auto, auto;
+}
+
 /* ── Festive gallery title ── */
 .site-title {
   font-family: 'Pacifico', cursive;

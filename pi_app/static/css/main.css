@@ -35,6 +35,19 @@ body.theme-luxury {
   --paper:   #262626;
   --shadow:  rgba(0, 0, 0, 0.35);
 }
+
+body.theme-black-rose {
+  --bg:      #121212;
+  --bg2:     #1f1a1a;
+  --text:    #faf6f4;
+  --accent:  #b76e79;
+  --gold:    #d08a95;
+  --border:  #7f4b54;
+  --muted:   #c7a6ac;
+  --paper:   #2b2525;
+  --shadow:  rgba(0, 0, 0, 0.35);
+}
+
 /* ── end photobooth and admin Theme  ── */
 
 *, *::before, *::after { box-sizing: border-box; }

@@ -24,7 +24,8 @@
     'girls_birthday': '🎀',
     'boys_birthday':  '🚀',
     'new_years':      '🎆',
-    'halloween':      '🎃'
+    'halloween':      '🎃',
+    'fourth_of_july': '🎇'
   } %}
   {% set _icon = _icons.get(event, '📷') %}
   <div class="film-line"></div>
@@ -57,6 +58,13 @@
     <div class="col" id="slot-4"></div>
     <div class="col" id="slot-5"></div>
   </div>
+
+  {% if qr_url %}
+  <div class="qr-box">
+    <img src="/qr-image" alt="QR Code" class="qr-img">
+    <p class="qr-label">Scan to view photos</p>
+  </div>
+  {% endif %}
 
 </div>
 

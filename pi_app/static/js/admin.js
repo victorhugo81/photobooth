@@ -120,7 +120,29 @@ function toast(msg, type = 'success') {
 loadBackgrounds();
 loadEvent();
 loadLabel();
+loadQrUrl();
 loadUiTheme();
+
+async function loadQrUrl() {
+  try {
+    const resp = await fetch('/api/qr-url');
+    const data = await resp.json();
+    document.getElementById('qr-url-input').value = data.url || '';
+  } catch (_) {}
+}
+
+document.getElementById('qr-url-save-btn').addEventListener('click', async () => {
+  const url = document.getElementById('qr-url-input').value.trim();
+  try {
+    const resp = await fetch('/api/qr-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (resp.ok) toast('QR URL saved', 'success');
+    else toast('Failed to save QR URL', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
 
 async function loadLabel() {
   try {
