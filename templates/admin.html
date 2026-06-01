@@ -28,7 +28,7 @@
   </div>
 </header>
 
-<div class="container pb-5" style="max-width:900px">
+<div class="container admin-container pb-5">
 
   <!-- Event selector -->
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
@@ -94,7 +94,7 @@
   <!-- Background Removal -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading"><strong>Background Removal</strong></span>
-    <span id="removal-mode-status" style="font-size:0.75rem;color:var(--muted)"></span>
+    <span id="removal-mode-status" class="section-status"></span>
   </div>
   <div class="event-grid">
     <button class="event-btn" id="removal-greenscreen-btn" data-mode="greenscreen">
@@ -123,7 +123,7 @@
   <!-- Online Access -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading"><strong>Online Access</strong></span>
-    <span id="online-access-status" style="font-size:0.75rem;color:var(--muted)"></span>
+    <span id="online-access-status" class="section-status"></span>
   </div>
   <div class="event-grid">
     <button class="event-btn" id="online-yes-btn" data-access="yes">
@@ -140,12 +140,12 @@
   <!-- Date Filter -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading"><strong>Date Filter</strong></span>
-    <span id="date-filter-status" style="font-size:0.75rem;color:var(--muted)"></span>
+    <span id="date-filter-status" class="section-status"></span>
   </div>
   <div class="label-editor">
-    <input id="date-filter-input" type="date" class="label-input" style="flex:1">
+    <input id="date-filter-input" type="date" class="label-input">
     <button id="date-filter-save-btn" class="label-save-btn">Apply</button>
-    <button id="date-filter-clear-btn" class="label-save-btn" style="background:transparent;color:var(--muted);border-color:var(--muted)">Clear</button>
+    <button id="date-filter-clear-btn" class="label-save-btn">Clear</button>
   </div>
   <p class="label-hint">Only show photos from this date in Gallery and Live Show. Clear to show all.</p>
 
@@ -197,21 +197,21 @@
   <!-- Grid -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading">Images</span>
-    <span id="bg-count" style="font-size:0.75rem;color:#333"></span>
+    <span id="bg-count"></span>
   </div>
 
   <div id="bg-grid" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3"></div>
 
-  <p id="empty-msg" class="text-center mt-5" style="display:none">No backgrounds yet</p>
+  <p id="empty-msg" class="text-center mt-5">No backgrounds yet</p>
 
   <hr class="section-divider">
 
   <!-- Environment Configuration -->
   <div class="d-flex align-items-center justify-content-between mb-1">
     <span class="section-heading"><strong>Environment Configuration</strong></span>
-    <span id="env-status" style="font-size:0.75rem;color:var(--muted)"></span>
+    <span id="env-status" class="section-status"></span>
   </div>
-  <p class="label-hint mb-3">Written to <code style="font-size:0.72rem;color:var(--muted)">.env</code> on disk. Restart the app for changes to take effect.</p>
+  <p class="label-hint mb-3">Written to <code>.env</code> on disk. Restart the app for changes to take effect.</p>
 
   <div class="env-group-label">Cloudflare R2</div>
   <div class="label-editor mb-2">
@@ -260,7 +260,7 @@
     <input id="env-FLASK_RUN_PORT" type="text" class="label-input" placeholder="5000">
   </div>
 
-  <button id="env-save-btn" class="label-save-btn" style="width:100%;padding:0.55rem 1.2rem">Save to .env</button>
+  <button id="env-save-btn" class="label-save-btn">Save to .env</button>
 
 </div>
 

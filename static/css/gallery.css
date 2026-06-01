@@ -456,3 +456,25 @@ a.page-btn:hover { color: var(--accent); border-color: var(--accent); }
   font-style: italic;
   color: var(--muted);
 }
+
+/* ── Gallery page container ── */
+.gallery-container { max-width: 1400px; }
+
+/* ── Gallery empty state ── */
+.gallery-empty {
+  color: var(--muted);
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: .1em;
+}
+
+/* ── Photo detail page ── */
+.photo-detail-container { max-width: 520px; }
+
+.photo-detail-card {
+  cursor: default;
+  width: 100%;
+}
+.photo-detail-card:hover {
+  transform: none !important;
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.10) !important;
+}

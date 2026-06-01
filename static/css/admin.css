@@ -274,8 +274,33 @@
   margin-bottom: 0.75rem;
 }
 
+/* ── Admin page container ── */
+.admin-container { max-width: 900px; }
+
+/* ── Section status text (small muted label next to section headings) ── */
+.section-status {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ── Date filter clear button (secondary style) ── */
+#date-filter-clear-btn { border-color: var(--muted); }
+
+/* ── label-hint inline code ── */
+.label-hint code {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ── Full-width env save button ── */
+#env-save-btn {
+  width: 100%;
+  padding: 0.55rem 1.2rem;
+}
+
 /* ── Empty state ── */
 #empty-msg {
+  display: none;
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.1em;
   color: var(--muted);

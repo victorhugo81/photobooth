@@ -42,7 +42,7 @@
   </div>
 </header>
 
-<div class="container pb-5" style="max-width:1400px">
+<div class="container gallery-container pb-5">
 
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
     <span class="section-heading">Captured Photos{% if date_filter %} &mdash; {{ date_filter }}{% endif %}</span>
@@ -80,7 +80,7 @@
   {% endif %}
 
   {% else %}
-  <p class="text-center mt-5" style="color:var(--muted);font-family:'Bebas Neue',sans-serif;letter-spacing:.1em">No photos yet</p>
+  <p class="gallery-empty text-center mt-5">No photos yet</p>
   {% endif %}
 
 </div>
