@@ -37,7 +37,12 @@ async function loadBackgrounds() {
       document.getElementById('removal-toggle').style.removeProperty('display');
     }
 
-    if (!caps.rembg) {
+    if (caps.rembg) {
+      const aiBtn = document.getElementById('ai-btn');
+      document.querySelectorAll('.removal-btn').forEach(b => b.classList.remove('active'));
+      aiBtn.classList.add('active');
+      removalMode = 'ai';
+    } else {
       const aiBtn = document.getElementById('ai-btn');
       aiBtn.disabled = true;
       aiBtn.title = 'rembg not installed — run: uv add rembg[cpu]';

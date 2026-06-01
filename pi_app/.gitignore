@@ -7,3 +7,4 @@ photos/
 static/qr_codes/
 photobooth.db
 instance/
+*.json
