@@ -186,6 +186,65 @@
   <div id="bg-grid" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3"></div>
 
   <p id="empty-msg" class="text-center mt-5" style="display:none">No backgrounds yet</p>
+
+  <hr class="section-divider">
+
+  <!-- Environment Configuration -->
+  <div class="d-flex align-items-center justify-content-between mb-1">
+    <span class="section-heading"><strong>Environment Configuration</strong></span>
+    <span id="env-status" style="font-size:0.75rem;color:var(--muted)"></span>
+  </div>
+  <p class="label-hint mb-3">Written to <code style="font-size:0.72rem;color:var(--muted)">.env</code> on disk. Restart the app for changes to take effect.</p>
+
+  <div class="env-group-label">Cloudflare R2</div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Account ID</span>
+    <input id="env-R2_ACCOUNT_ID" type="text" class="label-input" autocomplete="off">
+  </div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Access Key ID</span>
+    <input id="env-R2_ACCESS_KEY_ID" type="text" class="label-input" autocomplete="off">
+  </div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Secret Key</span>
+    <input id="env-R2_SECRET_ACCESS_KEY" type="password" class="label-input" autocomplete="new-password">
+    <button type="button" id="env-secret-toggle" class="label-save-btn" title="Show / hide">&#128065;</button>
+  </div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Bucket Name</span>
+    <input id="env-R2_BUCKET_NAME" type="text" class="label-input" autocomplete="off">
+  </div>
+  <div class="label-editor mb-4">
+    <span class="env-label">Public URL</span>
+    <input id="env-R2_PUBLIC_URL" type="url" class="label-input" placeholder="https://pub-….r2.dev">
+  </div>
+
+  <div class="env-group-label">Share Site</div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Share Site URL</span>
+    <input id="env-SHARE_SITE_URL" type="url" class="label-input" placeholder="https://…">
+  </div>
+  <div class="label-editor mb-4">
+    <span class="env-label">Photoslide URL</span>
+    <input id="env-PHOTOSLIDE_URL" type="url" class="label-input" placeholder="https://…">
+  </div>
+
+  <div class="env-group-label">Flask Server</div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Environment</span>
+    <input id="env-FLASK_ENV" type="text" class="label-input" placeholder="production">
+  </div>
+  <div class="label-editor mb-2">
+    <span class="env-label">Host</span>
+    <input id="env-FLASK_RUN_HOST" type="text" class="label-input" placeholder="0.0.0.0">
+  </div>
+  <div class="label-editor mb-4">
+    <span class="env-label">Port</span>
+    <input id="env-FLASK_RUN_PORT" type="text" class="label-input" placeholder="5000">
+  </div>
+
+  <button id="env-save-btn" class="label-save-btn" style="width:100%;padding:0.55rem 1.2rem">Save to .env</button>
+
 </div>
 
 <div id="toast-container"></div>

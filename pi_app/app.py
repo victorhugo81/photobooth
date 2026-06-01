@@ -6,7 +6,7 @@ import re
 import threading
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv, set_key
 from PIL import Image as PILImage
 from flask import Flask, Response, jsonify, redirect, render_template, request
 from werkzeug.utils import secure_filename
@@ -30,6 +30,12 @@ _Session = None
 _last_status: dict = {}
 _capture_lock = threading.Lock()
 
+
+_ENV_KEYS = (
+    "R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET_NAME", "R2_PUBLIC_URL", "SHARE_SITE_URL",
+    "PHOTOSLIDE_URL", "FLASK_ENV", "FLASK_RUN_HOST", "FLASK_RUN_PORT",
+)
 
 _VALID_EVENTS = {
     "default", "christmas", "birthday", "graduation", "wedding",
@@ -473,6 +479,29 @@ def create_app() -> Flask:
     @app.route("/status")
     def status():
         return jsonify(_last_status)
+
+    @app.route("/api/env", methods=["GET"])
+    def get_env_route():
+        env_path = Path(app.root_path) / ".env"
+        try:
+            values = dotenv_values(str(env_path))
+        except Exception:
+            values = {}
+        return jsonify({k: values.get(k, "") for k in _ENV_KEYS})
+
+    @app.route("/api/env", methods=["POST"])
+    def set_env_route():
+        data = request.get_json(silent=True) or {}
+        env_path = Path(app.root_path) / ".env"
+        try:
+            for key in _ENV_KEYS:
+                if key in data:
+                    set_key(str(env_path), key, data[key])
+            load_dotenv(str(env_path), override=True)
+            return jsonify({"ok": True})
+        except Exception as exc:
+            logger.exception("Failed to write .env")
+            return jsonify({"error": str(exc)}), 500
 
     return app
 

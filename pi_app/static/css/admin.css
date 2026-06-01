@@ -255,6 +255,25 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Env config form ── */
+.env-label {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.env-group-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+
 /* ── Empty state ── */
 #empty-msg {
   font-family: 'Bebas Neue', sans-serif;

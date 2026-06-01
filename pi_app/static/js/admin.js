@@ -124,6 +124,7 @@ loadQrUrl();
 loadOnlineAccess();
 loadDateFilter();
 loadUiTheme();
+loadEnv();
 
 async function loadOnlineAccess() {
   try {
@@ -311,6 +312,52 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
       }
     } catch (_) { toast('Network error', 'error'); }
   });
+});
+
+const ENV_KEYS = [
+  'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET_NAME', 'R2_PUBLIC_URL', 'SHARE_SITE_URL',
+  'PHOTOSLIDE_URL', 'FLASK_ENV', 'FLASK_RUN_HOST', 'FLASK_RUN_PORT',
+];
+
+async function loadEnv() {
+  try {
+    const resp = await fetch('/api/env');
+    const data = await resp.json();
+    ENV_KEYS.forEach(k => {
+      const el = document.getElementById(`env-${k}`);
+      if (el) el.value = data[k] || '';
+    });
+  } catch (_) {}
+}
+
+document.getElementById('env-secret-toggle').addEventListener('click', () => {
+  const el = document.getElementById('env-R2_SECRET_ACCESS_KEY');
+  el.type = el.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('env-save-btn').addEventListener('click', async () => {
+  const payload = {};
+  ENV_KEYS.forEach(k => {
+    const el = document.getElementById(`env-${k}`);
+    if (el) payload[k] = el.value;
+  });
+  const status = document.getElementById('env-status');
+  try {
+    const resp = await fetch('/api/env', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (resp.ok) {
+      status.textContent = 'Saved';
+      toast('Saved to .env — restart the app to apply changes', 'success');
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    } else {
+      const d = await resp.json();
+      toast(d.error || 'Failed to save .env', 'error');
+    }
+  } catch (_) { toast('Network error', 'error'); }
 });
 
 document.querySelectorAll('.event-btn').forEach(btn => {
