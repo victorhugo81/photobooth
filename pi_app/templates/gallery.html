@@ -42,7 +42,7 @@
   </div>
 </header>
 
-<div class="container pb-5" style="max-width:1100px">
+<div class="container pb-5" style="max-width:1400px">
 
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
     <span class="section-heading">Captured Photos{% if date_filter %} &mdash; {{ date_filter }}{% endif %}</span>
@@ -50,13 +50,13 @@
   </div>
 
   {% if photos %}
-  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 gallery-grid">
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3 g-xl-4 gallery-grid">
     {% for photo in photos %}
     <div class="col">
       <a class="photo-card"
          href="{{ share_site_url }}/?f={{ photo.filename }}"
          target="_blank" rel="noopener">
-        <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy">
+        <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy" decoding="async">
       </a>
     </div>
     {% endfor %}

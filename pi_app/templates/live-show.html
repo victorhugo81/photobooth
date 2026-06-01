@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/live-show.css') }}">
 </head>
-<body class="event-{{ event }} theme-{{ ui_theme }}">
+<body class="event-{{ event }} theme-{{ ui_theme }}{% if qr_url %} has-qr{% endif %}">
 
 <header class="site-header">
   {% set _icons = {
@@ -43,7 +43,7 @@
   </div>
 </header>
 
-<div class="container" style="max-width:900px">
+<div class="container" style="max-width: min(98vw, 1600px)">
 
   <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
     <span class="section-heading">Live Display</span>
