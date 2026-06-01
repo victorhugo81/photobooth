@@ -121,6 +121,7 @@ loadBackgrounds();
 loadEvent();
 loadLabel();
 loadQrUrl();
+loadRemovalMode();
 loadOnlineAccess();
 loadDateFilter();
 loadUiTheme();
@@ -187,6 +188,54 @@ async function loadQrUrl() {
     document.getElementById('qr-url-input').value = data.url || '';
   } catch (_) {}
 }
+
+async function loadRemovalMode() {
+  try {
+    const resp = await fetch('/api/removal-mode');
+    const data = await resp.json();
+    setRemovalModeUI(data.mode, data.rembg);
+  } catch (_) {}
+}
+
+function setRemovalModeUI(mode, rembgAvail) {
+  document.getElementById('removal-greenscreen-btn').classList.toggle('active', mode === 'greenscreen');
+  const aiBtn = document.getElementById('removal-ai-btn');
+  aiBtn.classList.toggle('active', mode === 'ai');
+  aiBtn.disabled = !rembgAvail;
+  aiBtn.title = rembgAvail ? '' : 'rembg not installed';
+  const status = document.getElementById('removal-mode-status');
+  if (mode === 'ai' && !rembgAvail) {
+    status.textContent = 'AI unavailable';
+    status.style.color = '#8b1a1a';
+  } else {
+    status.textContent = mode === 'ai' ? 'AI mode' : 'Green screen';
+    status.style.color = '';
+  }
+}
+
+document.getElementById('removal-greenscreen-btn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch('/api/removal-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'greenscreen' }),
+    });
+    if (resp.ok) { setRemovalModeUI('greenscreen', true); toast('Green Screen mode set', 'success'); }
+    else toast('Failed to save setting', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
+
+document.getElementById('removal-ai-btn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch('/api/removal-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'ai' }),
+    });
+    if (resp.ok) { setRemovalModeUI('ai', true); toast('AI Remove mode set', 'success'); }
+    else toast('Failed to save setting', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+});
 
 document.getElementById('qr-url-save-btn').addEventListener('click', async () => {
   const url = document.getElementById('qr-url-input').value.trim();

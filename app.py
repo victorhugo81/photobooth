@@ -45,7 +45,7 @@ _VALID_EVENTS = {
 
 _VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
-_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json", "online_access.json")
+_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json", "online_access.json", "removal_mode.json")
 
 
 def _data_dir(app: Flask) -> Path:
@@ -145,6 +145,20 @@ def _set_online_access(app: Flask, enabled: bool) -> None:
     content = json.dumps({"enabled": enabled})
     (_data_dir(app) / "online_access.json").write_text(content)
     _sync_to_r2("online_access.json", content)
+
+
+def _get_removal_mode(app: Flask) -> str:
+    try:
+        data = json.loads((_data_dir(app) / "removal_mode.json").read_text())
+        return data.get("mode", "greenscreen")
+    except Exception:
+        return "greenscreen"
+
+
+def _set_removal_mode(app: Flask, mode: str) -> None:
+    content = json.dumps({"mode": mode})
+    (_data_dir(app) / "removal_mode.json").write_text(content)
+    _sync_to_r2("removal_mode.json", content)
 
 
 def create_app() -> Flask:
@@ -307,11 +321,10 @@ def create_app() -> Flask:
         data = request.get_json(silent=True) or {}
         theme_id = data.get("theme", "classic")
         background_id = data.get("background", "none")
-        removal_mode = data.get("removal", "greenscreen")  # "greenscreen" | "ai"
         if not _capture_lock.acquire(blocking=False):
             return jsonify({"error": "A capture is already in progress"}), 409
         try:
-            result = _run_capture(app, theme_id, background_id, removal_mode)
+            result = _run_capture(app, theme_id, background_id)
             return jsonify(result)
         except Exception as exc:
             logger.exception("Capture failed")
@@ -453,6 +466,19 @@ def create_app() -> Flask:
         )
         return jsonify({"enabled": enabled, "r2_configured": r2_configured})
 
+    @app.route("/api/removal-mode", methods=["GET"])
+    def get_removal_mode_route():
+        return jsonify({"mode": _get_removal_mode(app), "rembg": rembg_available()})
+
+    @app.route("/api/removal-mode", methods=["POST"])
+    def set_removal_mode_route():
+        data = request.get_json(silent=True) or {}
+        mode = data.get("mode", "greenscreen")
+        if mode not in ("greenscreen", "ai"):
+            return jsonify({"error": "Invalid mode"}), 400
+        _set_removal_mode(app, mode)
+        return jsonify({"mode": mode})
+
     @app.route("/photos/<path:filename>")
     def serve_local_photo(filename):
         from flask import send_from_directory
@@ -514,9 +540,13 @@ def _run_capture(
     app: Flask,
     theme_id: str = "none",
     background_id: str = "none",
-    removal_mode: str = "greenscreen",
 ) -> dict:
     global _last_status
+
+    removal_mode = _get_removal_mode(app)
+    if removal_mode == "ai" and not rembg_available():
+        removal_mode = "greenscreen"
+        logger.warning("AI removal requested but rembg unavailable; falling back to green screen")
 
     now = datetime.datetime.utcnow()
     date_dir  = now.strftime('%Y-%m-%d')

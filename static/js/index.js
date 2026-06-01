@@ -9,44 +9,15 @@ const loadingMsg      = document.getElementById('loading-msg');
 const errorMsg        = document.getElementById('error-msg');
 const bgSelectedLabel = document.getElementById('bg-selected-label');
 
-let qrResetInterval  = null;
+let qrResetInterval    = null;
 let selectedBackground = 'none';
-let removalMode        = 'greenscreen';
-
-// ── Removal mode toggle ──────────────────────────────────────────────────
-document.querySelectorAll('.removal-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.removal-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    removalMode = btn.dataset.mode;
-  });
-});
 
 // ── Background picker ────────────────────────────────────────────────────
 async function loadBackgrounds() {
   try {
-    const [bgResp, capResp] = await Promise.all([
-      fetch('/backgrounds'),
-      fetch('/capabilities'),
-    ]);
-    const list = await bgResp.json();
-    const caps = await capResp.json();
+    const resp = await fetch('/backgrounds');
+    const list = await resp.json();
     const grid = document.getElementById('bg-grid');
-
-    if (list.length > 1) {
-      document.getElementById('removal-toggle').style.removeProperty('display');
-    }
-
-    if (caps.rembg) {
-      const aiBtn = document.getElementById('ai-btn');
-      document.querySelectorAll('.removal-btn').forEach(b => b.classList.remove('active'));
-      aiBtn.classList.add('active');
-      removalMode = 'ai';
-    } else {
-      const aiBtn = document.getElementById('ai-btn');
-      aiBtn.disabled = true;
-      aiBtn.title = 'rembg not installed — run: uv add rembg[cpu]';
-    }
 
     list.forEach((bg, i) => {
       const btn = document.createElement('button');
@@ -98,7 +69,7 @@ async function startCapture() {
     const resp = await fetch('/capture', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ background: selectedBackground, removal: removalMode }),
+      body: JSON.stringify({ background: selectedBackground }),
     });
     const data = await resp.json();
     loadingMsg.style.display = 'none';

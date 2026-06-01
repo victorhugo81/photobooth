@@ -91,6 +91,23 @@
 
   <hr class="section-divider">
 
+  <!-- Background Removal -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading"><strong>Background Removal</strong></span>
+    <span id="removal-mode-status" style="font-size:0.75rem;color:var(--muted)"></span>
+  </div>
+  <div class="event-grid">
+    <button class="event-btn" id="removal-greenscreen-btn" data-mode="greenscreen">
+      <span class="event-label">Green Screen</span>
+    </button>
+    <button class="event-btn" id="removal-ai-btn" data-mode="ai">
+      <span class="event-label">AI Remove</span>
+    </button>
+  </div>
+  <p class="label-hint">Green Screen requires a physical green screen. AI Remove works on any background but is slower.</p>
+
+  <hr class="section-divider">
+
   <!-- QR Code URL -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading"><strong>QR Code URL</strong></span>
