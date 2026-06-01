@@ -108,15 +108,28 @@ async function startCapture() {
       return;
     }
 
-    showQR(data.qr_url);
+    if (data.upload_error) {
+      showError(`Upload failed: ${data.upload_error}`);
+    }
+
+    showResult(data);
   } catch (err) {
     loadingMsg.style.display = 'none';
     showError('Network error — please try again.');
   }
 }
 
-function showQR(qrUrl) {
-  qrImg.src = qrUrl + '?t=' + Date.now();
+function showResult(data) {
+  const heading = document.getElementById('qr-overlay-heading');
+  if (data.qr_url) {
+    heading.textContent = 'Scan to get your photo!';
+    qrImg.src = data.qr_url + '?t=' + Date.now();
+    qrImg.classList.remove('photo-mode');
+  } else {
+    heading.textContent = 'Photo saved!';
+    qrImg.src = data.r2_url + '?t=' + Date.now();
+    qrImg.classList.add('photo-mode');
+  }
   qrOverlay.style.display = 'flex';
 
   let remaining = 20;
@@ -133,6 +146,7 @@ function resetToPreview() {
   if (qrResetInterval) { clearInterval(qrResetInterval); qrResetInterval = null; }
   qrOverlay.style.display = 'none';
   qrImg.src = '';
+  qrImg.classList.remove('photo-mode');
   qrTimer.textContent = 'Returning in 20s…';
   captureBtn.disabled = false;
 }

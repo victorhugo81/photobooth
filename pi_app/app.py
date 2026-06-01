@@ -39,7 +39,7 @@ _VALID_EVENTS = {
 
 _VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
-_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json")
+_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json", "online_access.json")
 
 
 def _data_dir(app: Flask) -> Path:
@@ -125,6 +125,20 @@ def _set_date_filter(app: Flask, date: str | None) -> None:
     content = json.dumps({"date": date})
     (_data_dir(app) / "date_filter.json").write_text(content)
     _sync_to_r2("date_filter.json", content)
+
+
+def _get_online_access(app: Flask) -> bool:
+    try:
+        data = json.loads((_data_dir(app) / "online_access.json").read_text())
+        return bool(data.get("enabled", True))
+    except Exception:
+        return True
+
+
+def _set_online_access(app: Flask, enabled: bool) -> None:
+    content = json.dumps({"enabled": enabled})
+    (_data_dir(app) / "online_access.json").write_text(content)
+    _sync_to_r2("online_access.json", content)
 
 
 def create_app() -> Flask:
@@ -234,6 +248,30 @@ def create_app() -> Flask:
         return render_template("photos.html",
                                photos=photos_data,
                                share_site_url=share_site_url,
+                               event=event,
+                               img_label=img_label,
+                               ui_theme=_get_ui_theme(app))
+
+    @app.route("/photo/<path:filename>")
+    def photo_detail(filename):
+        share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
+        event = _get_event(app)
+        try:
+            img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
+        except Exception:
+            img_label = "PHOTOBOOTH"
+        with _Session() as session:
+            photo = session.query(Photo).filter(Photo.filename == filename).first()
+            if not photo:
+                return "Photo not found", 404
+            photo_data = photo.to_dict()
+        # Share URL only available when the photo is stored in R2 (not local)
+        share_url = ""
+        if share_site_url and not photo_data["r2_url"].startswith("/"):
+            share_url = f"{share_site_url}/?f={filename}"
+        return render_template("photo.html",
+                               photo=photo_data,
+                               share_url=share_url,
                                event=event,
                                img_label=img_label,
                                ui_theme=_get_ui_theme(app))
@@ -390,6 +428,31 @@ def create_app() -> Flask:
         _set_date_filter(app, date)
         return jsonify({"date": date})
 
+    @app.route("/api/online-access", methods=["GET"])
+    def get_online_access_route():
+        r2_configured = bool(
+            os.environ.get("R2_ACCOUNT_ID") and os.environ.get("R2_BUCKET_NAME")
+        )
+        return jsonify({"enabled": _get_online_access(app), "r2_configured": r2_configured})
+
+    @app.route("/api/online-access", methods=["POST"])
+    def set_online_access_route():
+        data = request.get_json(silent=True) or {}
+        if "enabled" not in data:
+            return jsonify({"error": "Missing 'enabled' field"}), 400
+        enabled = bool(data["enabled"])
+        _set_online_access(app, enabled)
+        r2_configured = bool(
+            os.environ.get("R2_ACCOUNT_ID") and os.environ.get("R2_BUCKET_NAME")
+        )
+        return jsonify({"enabled": enabled, "r2_configured": r2_configured})
+
+    @app.route("/photos/<path:filename>")
+    def serve_local_photo(filename):
+        from flask import send_from_directory
+        photos_dir = Path(app.root_path) / "templates" / "photos"
+        return send_from_directory(str(photos_dir), filename)
+
     @app.route("/api/photos")
     def api_photos():
         date_filter = _get_date_filter(app)
@@ -456,17 +519,37 @@ def _run_capture(
         themed.save(str(local_path), "JPEG", quality=95)
         logger.info("Applied theme '%s' (frame_color=%s) to %s", theme_id, frame_color, filename)
 
-    # 4. Upload to Cloudflare R2
-    r2_url = upload_photo(str(local_path), r2_key)
-    local_photos_json = str(_data_dir(app) / "photos.json")
-    update_photos_json(r2_key, local_path=local_photos_json)
+    # 4. Conditionally upload to Cloudflare R2
+    online_access = _get_online_access(app)
+    upload_error: str | None = None
+    if online_access:
+        try:
+            r2_url = upload_photo(str(local_path), r2_key)
+            local_photos_json = str(_data_dir(app) / "photos.json")
+            update_photos_json(r2_key, local_path=local_photos_json)
+        except Exception as exc:
+            logger.warning("R2 upload failed for %s: %s", r2_key, exc)
+            r2_url = f"/photos/{r2_key}"
+            upload_error = str(exc)
+    else:
+        r2_url = f"/photos/{r2_key}"
 
-    # 5. Generate QR code pointing at the share page
+    # 5. Generate QR code
     share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
-    share_url = f"{share_site_url}/?f={r2_key}"
     qr_filename = f"qr_{filename.replace('.jpg', '.png')}"
-    qr_path = Path(app.root_path) / "static" / "qr_codes" / qr_filename
-    generate_qr(share_url, str(qr_path))
+    share_url = ""
+    qr_url_path = ""
+    if online_access and not upload_error and share_site_url:
+        # Online mode: per-photo share URL
+        share_url = f"{share_site_url}/?f={r2_key}"
+        qr_target = share_url
+    else:
+        # Local-only or upload failed: fall back to admin-configured QR URL
+        qr_target = _get_qr_url(app)
+    if qr_target:
+        qr_path = Path(app.root_path) / "static" / "qr_codes" / qr_filename
+        generate_qr(qr_target, str(qr_path))
+        qr_url_path = f"/static/qr_codes/{qr_filename}"
 
     # 6. Persist to SQLite
     with _Session() as session:
@@ -477,9 +560,11 @@ def _run_capture(
         "filename": r2_key,
         "r2_url": r2_url,
         "share_url": share_url,
-        "qr_url": f"/static/qr_codes/{qr_filename}",
+        "qr_url": qr_url_path,
         "timestamp": now.isoformat() + "Z",
     }
+    if upload_error:
+        result["upload_error"] = upload_error
     _last_status = result
     logger.info("Capture complete: %s", r2_key)
     return result

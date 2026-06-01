@@ -103,6 +103,23 @@
 
   <hr class="section-divider">
 
+  <!-- Online Access -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="section-heading"><strong>Online Access</strong></span>
+    <span id="online-access-status" style="font-size:0.75rem;color:var(--muted)"></span>
+  </div>
+  <div class="event-grid">
+    <button class="event-btn" id="online-yes-btn" data-access="yes">
+      <span class="event-label">Yes — Upload to Cloud</span>
+    </button>
+    <button class="event-btn" id="online-no-btn" data-access="no">
+      <span class="event-label">No — Local Only</span>
+    </button>
+  </div>
+  <p class="label-hint">When enabled, captured photos are automatically uploaded to your configured Cloudflare R2 bucket and can be shared via the share page.</p>
+
+  <hr class="section-divider">
+
   <!-- Date Filter -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <span class="section-heading"><strong>Date Filter</strong></span>

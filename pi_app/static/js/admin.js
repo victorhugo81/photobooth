@@ -121,8 +121,63 @@ loadBackgrounds();
 loadEvent();
 loadLabel();
 loadQrUrl();
+loadOnlineAccess();
 loadDateFilter();
 loadUiTheme();
+
+async function loadOnlineAccess() {
+  try {
+    const resp = await fetch('/api/online-access');
+    const data = await resp.json();
+    setOnlineAccessUI(data.enabled, data.r2_configured);
+  } catch (_) {}
+}
+
+function setOnlineAccessUI(enabled, r2Configured) {
+  document.getElementById('online-yes-btn').classList.toggle('active', enabled);
+  document.getElementById('online-no-btn').classList.toggle('active', !enabled);
+  const status = document.getElementById('online-access-status');
+  if (enabled && !r2Configured) {
+    status.textContent = 'R2 not configured';
+    status.style.color = '#8b1a1a';
+  } else {
+    status.textContent = enabled ? 'Cloud upload active' : 'Local storage only';
+    status.style.color = '';
+  }
+}
+
+document.getElementById('online-yes-btn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch('/api/online-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: true }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      setOnlineAccessUI(true, data.r2_configured);
+      toast(data.r2_configured ? 'Online access enabled' : 'Enabled — R2 not configured in .env', data.r2_configured ? 'success' : 'error');
+    } else {
+      toast('Failed to save setting', 'error');
+    }
+  } catch (_) { toast('Network error', 'error'); }
+});
+
+document.getElementById('online-no-btn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch('/api/online-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: false }),
+    });
+    if (resp.ok) {
+      setOnlineAccessUI(false, false);
+      toast('Local-only mode — no cloud uploads', 'success');
+    } else {
+      toast('Failed to save setting', 'error');
+    }
+  } catch (_) { toast('Network error', 'error'); }
+});
 
 async function loadQrUrl() {
   try {

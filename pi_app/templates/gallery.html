@@ -54,8 +54,7 @@
     {% for photo in photos %}
     <div class="col">
       <a class="photo-card"
-         href="{{ share_site_url }}/?f={{ photo.filename }}"
-         target="_blank" rel="noopener">
+         href="/photo/{{ photo.filename }}">
         <img src="{{ photo.r2_url }}" alt="{{ photo.filename }}" loading="lazy" decoding="async">
       </a>
     </div>

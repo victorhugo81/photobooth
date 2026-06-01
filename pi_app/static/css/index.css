@@ -211,6 +211,12 @@ body { display: flex; flex-direction: column; }
   background: #fff;
   box-shadow: 4px 4px 0 var(--border);
 }
+#qr-img.photo-mode {
+  max-width: min(300px, 70vw);
+  max-height: 60vh;
+  width: auto;
+  object-fit: contain;
+}
 #qr-timer {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 0.9rem;
