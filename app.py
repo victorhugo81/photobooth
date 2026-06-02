@@ -19,7 +19,7 @@ from backgrounds import (
     delete_background, get_dominant_color, rembg_available, save_background,
 )
 from themes import apply_theme, theme_list
-from uploader import download_data_file, update_photos_json, upload_data_file, upload_photo
+from uploader import download_data_file, update_photos_json, upload_bytes_to_r2, upload_data_file, upload_photo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -170,6 +170,7 @@ def create_app() -> Flask:
     photos_dir = Path(app.root_path) / "templates" / "photos"
     qr_dir = Path(app.root_path) / "static" / "qr_codes"
     _data_dir(app).mkdir(parents=True, exist_ok=True)
+    (_data_dir(app) / "qr_codes").mkdir(exist_ok=True)
     photos_dir.mkdir(parents=True, exist_ok=True)
     qr_dir.mkdir(parents=True, exist_ok=True)
 
@@ -398,11 +399,26 @@ def create_app() -> Flask:
 
     @app.route("/qr-image")
     def qr_image():
-        url = _get_qr_url(app)
-        if not url:
+        base = _get_qr_url(app)
+        if not base:
             return "", 204
+        date = _get_date_filter(app) or datetime.date.today().isoformat()
+        sep = "&" if "?" in base else "?"
+        url = f"{base}{sep}date={date}"
         buf = generate_qr_bytes(url)
-        return Response(buf.getvalue(), mimetype="image/png",
+        png = buf.getvalue()
+
+        # Persist one QR PNG per date to data/qr_codes/
+        qr_path = _data_dir(app) / "qr_codes" / f"qr_{date}.png"
+        if not qr_path.exists():
+            try:
+                qr_path.write_bytes(png)
+                if os.environ.get("R2_ACCOUNT_ID"):
+                    upload_bytes_to_r2(f"data/qr_codes/qr_{date}.png", png, "image/png")
+            except Exception:
+                logger.warning("Failed to save date QR image", exc_info=True)
+
+        return Response(png, mimetype="image/png",
                         headers={"Cache-Control": "no-store"})
 
     @app.route("/api/qr-url", methods=["GET"])
@@ -639,8 +655,13 @@ def _run_capture(
         share_url = f"{share_site_url}/?f={r2_key}"
         qr_target = share_url
     else:
-        # Local-only or upload failed: fall back to admin-configured QR URL
-        qr_target = _get_qr_url(app)
+        # Local-only or upload failed: use admin QR URL with today's date
+        qr_base = _get_qr_url(app)
+        if qr_base:
+            sep = "&" if "?" in qr_base else "?"
+            qr_target = f"{qr_base}{sep}date={date_dir}"
+        else:
+            qr_target = ""
     if qr_target:
         qr_path = Path(app.root_path) / "static" / "qr_codes" / qr_filename
         generate_qr(qr_target, str(qr_path))

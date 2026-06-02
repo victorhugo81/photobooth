@@ -54,6 +54,18 @@ def _s3_client():
     )
 
 
+def upload_bytes_to_r2(key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
+    """Upload raw bytes to R2 at the given key."""
+    bucket = os.environ["R2_BUCKET_NAME"]
+    _s3_client().put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=data,
+        ContentType=content_type,
+    )
+    logger.info("Uploaded to R2: %s", key)
+
+
 def upload_photo(local_path: str, r2_key: str) -> str:
     """Upload a JPEG file to R2. Returns the public URL."""
     bucket = os.environ["R2_BUCKET_NAME"]
