@@ -4,7 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 photos/
-static/qr_codes/
+static/data/qr_codes/
 photobooth.db
 instance/
 *.json
