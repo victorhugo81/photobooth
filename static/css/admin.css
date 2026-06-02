@@ -292,6 +292,13 @@
   color: var(--muted);
 }
 
+/* ── Bulk upload button ── */
+.bulk-upload-btn {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+.bulk-upload-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
 /* ── Full-width env save button ── */
 #env-save-btn {
   width: 100%;

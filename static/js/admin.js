@@ -146,6 +146,8 @@ function setOnlineAccessUI(enabled, r2Configured) {
     status.textContent = enabled ? 'Cloud upload active' : 'Local storage only';
     status.style.color = '';
   }
+  const bulkBtn = document.getElementById('bulk-upload-btn');
+  if (bulkBtn) bulkBtn.disabled = !r2Configured;
 }
 
 document.getElementById('online-yes-btn').addEventListener('click', async () => {
@@ -163,6 +165,30 @@ document.getElementById('online-yes-btn').addEventListener('click', async () => 
       toast('Failed to save setting', 'error');
     }
   } catch (_) { toast('Network error', 'error'); }
+});
+
+document.getElementById('bulk-upload-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('bulk-upload-btn');
+  const original = btn.textContent.trim();
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  try {
+    const resp = await fetch('/api/bulk-upload', { method: 'POST' });
+    const data = await resp.json();
+    if (!resp.ok) {
+      toast(data.error || 'Bulk upload failed', 'error');
+    } else if (data.uploaded === 0 && data.failed === 0) {
+      toast('No local photos to upload', 'success');
+    } else {
+      const msg = `Uploaded ${data.uploaded} photo${data.uploaded !== 1 ? 's' : ''}${data.failed ? `, ${data.failed} failed` : ''}`;
+      toast(msg, data.failed ? 'error' : 'success');
+    }
+  } catch (_) {
+    toast('Network error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 document.getElementById('online-no-btn').addEventListener('click', async () => {

@@ -466,6 +466,42 @@ def create_app() -> Flask:
         )
         return jsonify({"enabled": enabled, "r2_configured": r2_configured})
 
+    @app.route("/api/bulk-upload", methods=["POST"])
+    def bulk_upload_route():
+        if not os.environ.get("R2_ACCOUNT_ID") or not os.environ.get("R2_BUCKET_NAME"):
+            return jsonify({"error": "R2 not configured"}), 400
+
+        photos_dir = Path(app.root_path) / "templates" / "photos"
+        local_photos_json = str(_data_dir(app) / "photos.json")
+        uploaded = 0
+        failed = 0
+
+        with _Session() as session:
+            local_photos = (
+                session.query(Photo)
+                .filter(Photo.r2_url.like("/photos/%"))
+                .order_by(Photo.timestamp.asc())
+                .all()
+            )
+            for photo in local_photos:
+                local_path = photos_dir / photo.filename
+                if not local_path.exists():
+                    logger.warning("Bulk upload: missing file for %s", photo.filename)
+                    failed += 1
+                    continue
+                try:
+                    r2_url = upload_photo(str(local_path), photo.filename)
+                    photo.r2_url = r2_url
+                    update_photos_json(photo.filename, local_path=local_photos_json)
+                    uploaded += 1
+                except Exception as exc:
+                    logger.warning("Bulk upload failed for %s: %s", photo.filename, exc)
+                    failed += 1
+            if uploaded:
+                session.commit()
+
+        return jsonify({"uploaded": uploaded, "failed": failed})
+
     @app.route("/api/removal-mode", methods=["GET"])
     def get_removal_mode_route():
         return jsonify({"mode": _get_removal_mode(app), "rembg": rembg_available()})
