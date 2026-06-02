@@ -8,3 +8,4 @@ static/data/qr_codes/
 photobooth.db
 instance/
 *.json
+static/qr_codes/
