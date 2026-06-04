@@ -539,7 +539,8 @@ def create_app() -> Flask:
 
     @app.route("/api/photos")
     def api_photos():
-        date_filter = _get_date_filter(app)
+        # URL param (?date=YYYY-MM-DD) takes precedence over server-side filter
+        date_filter = request.args.get("date") or _get_date_filter(app)
         with _Session() as session:
             q = session.query(Photo)
             if date_filter:
