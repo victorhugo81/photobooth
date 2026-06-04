@@ -184,6 +184,47 @@ def _new_event_id() -> str:
     return "evt_" + secrets.token_urlsafe(6)
 
 
+def _event_photos_path(app: Flask, event_id: str) -> Path:
+    return _data_dir(app) / "event_photos" / f"{event_id}.json"
+
+
+def _get_event_photos_data(app: Flask, event_id: str) -> dict:
+    """Return event photo index dict. Falls back to rebuilding from SQLite if local file is missing."""
+    path = _event_photos_path(app, event_id)
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            pass
+    ev = next((e for e in _get_events(app) if e["id"] == event_id), {})
+    with _Session() as session:
+        rows = (session.query(Photo)
+                .filter(Photo.event_id == event_id)
+                .order_by(Photo.timestamp.asc())
+                .all())
+        keys = [r.filename for r in rows]
+    return {"id": event_id, "name": ev.get("name", event_id), "date": ev.get("date", ""), "photos": keys}
+
+
+def _save_event_photos(app: Flask, event_id: str, data: dict) -> None:
+    path = _event_photos_path(app, event_id)
+    path.parent.mkdir(exist_ok=True)
+    content = json.dumps(data)
+    path.write_text(content)
+    if os.environ.get("R2_ACCOUNT_ID"):
+        try:
+            upload_bytes_to_r2(f"data/event_photos/{event_id}.json", content.encode(), "application/json")
+        except Exception:
+            logger.warning("Failed to sync event_photos/%s.json to R2", event_id, exc_info=True)
+
+
+def _append_to_event_photos(app: Flask, event_id: str, photo_key: str) -> None:
+    data = _get_event_photos_data(app, event_id)
+    if photo_key not in data["photos"]:
+        data["photos"].append(photo_key)
+    _save_event_photos(app, event_id, data)
+
+
 def create_app() -> Flask:
     load_dotenv()
 
@@ -194,6 +235,7 @@ def create_app() -> Flask:
     qr_dir = Path(app.root_path) / "static" / "qr_codes"
     _data_dir(app).mkdir(parents=True, exist_ok=True)
     (_data_dir(app) / "qr_codes").mkdir(exist_ok=True)
+    (_data_dir(app) / "event_photos").mkdir(exist_ok=True)
     photos_dir.mkdir(parents=True, exist_ok=True)
     qr_dir.mkdir(parents=True, exist_ok=True)
 
@@ -416,6 +458,32 @@ def create_app() -> Flask:
             return jsonify({"error": "Deactivate the event before deleting it"}), 400
         _save_events(app, [e for e in events if e["id"] != event_id])
         return jsonify({"ok": True})
+
+    @app.route("/admin/backfill-event-photos", methods=["POST"])
+    def backfill_event_photos():
+        """Rebuild data/event_photos/{id}.json for every event that has tagged photos."""
+        events_by_id = {e["id"]: e for e in _get_events(app)}
+        buckets: dict[str, list[str]] = {}
+        with _Session() as session:
+            rows = (session.query(Photo)
+                    .filter(Photo.event_id.isnot(None))
+                    .order_by(Photo.timestamp.asc())
+                    .all())
+            for row in rows:
+                buckets.setdefault(row.event_id, []).append(row.filename)
+        written = 0
+        for event_id, keys in buckets.items():
+            ev = events_by_id.get(event_id, {})
+            _save_event_photos(app, event_id, {
+                "id": event_id,
+                "name": ev.get("name", event_id),
+                "date": ev.get("date", ""),
+                "photos": keys,
+            })
+            written += 1
+        total = sum(len(v) for v in buckets.values())
+        logger.info("Backfill: wrote %d event photo files (%d photos total)", written, total)
+        return jsonify({"ok": True, "events_written": written, "photos_indexed": total})
 
     @app.route("/video_feed")
     def video_feed():
@@ -804,6 +872,13 @@ def _run_capture(
     with _Session() as session:
         session.add(Photo(filename=r2_key, r2_url=r2_url, timestamp=now, event_id=active_event_id))
         session.commit()
+
+    # 7. Keep event photo index in sync (local + R2)
+    if active_event_id:
+        try:
+            _append_to_event_photos(app, active_event_id, r2_key)
+        except Exception:
+            logger.warning("Failed to update event photo index for %s", active_event_id, exc_info=True)
 
     result = {
         "filename": r2_key,
