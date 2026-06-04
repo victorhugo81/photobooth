@@ -38,7 +38,7 @@
   <div class="film-line bottom"></div>
 
   <div class="header-actions">
-    <a href="/gallery">Gallery</a>
+    <a href="/gallery{% if event_id %}?event={{ event_id }}{% endif %}">Gallery</a>
     <a href="/">← Photobooth</a>
   </div>
 </header>

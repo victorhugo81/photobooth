@@ -28,46 +28,58 @@ a paginated gallery, a single-photo detail page, and a full-screen live-show dis
 | Method | Path                    | Description                                                         |
 |--------|-------------------------|---------------------------------------------------------------------|
 | GET    | `/`                     | Main UI — live preview, background picker, capture button           |
-| GET    | `/admin`                | Settings — event, label, removal mode, QR URL, online access, theme |
-| GET    | `/gallery`              | Paginated photo gallery (12 per page, scrapbook card style)         |
-| GET    | `/live-show`            | Full-screen live display — 6 dynamic slots, cycling slideshow       |
+| GET    | `/admin`                | Settings — events, label, removal mode, QR URL, online access, theme|
+| GET    | `/gallery`              | Paginated photo gallery (12 per page); auto-redirects to active event|
+| GET    | `/live-show`            | Full-screen live display — 6 dynamic slots; auto-redirects to active event|
 | GET    | `/photo/<path:filename>`| Single-photo detail page with download button                       |
+
+Both `/gallery` and `/live-show` accept `?event=evt_abc123` and `?date=YYYY-MM-DD`
+query parameters. When an event is active and no filter is in the URL, both routes
+redirect automatically to include `?event=<active-id>`.
 
 ### API
 
-| Method | Path                      | Description                                                  |
-|--------|---------------------------|--------------------------------------------------------------|
-| GET    | `/video_feed`             | MJPEG stream (multipart/x-mixed-replace)                     |
-| POST   | `/capture`                | Trigger capture → theme → upload → QR; returns JSON          |
-| GET    | `/themes`                 | JSON list of available photo frame themes                    |
-| GET    | `/backgrounds`            | JSON list of uploaded background images                      |
-| POST   | `/backgrounds/upload`     | Upload a new background image                                |
-| DELETE | `/backgrounds/<id>`       | Delete a background image                                    |
-| GET    | `/backgrounds/<id>/color` | Dominant colour of a background                              |
-| GET    | `/photos/<path:filename>` | Serve a locally-stored photo (used when online access is off) |
-| GET    | `/api/photos`             | JSON array of photos (respects date filter), newest first    |
-| GET    | `/api/event`              | Get current event type                                       |
-| POST   | `/api/event`              | Set event type                                               |
-| GET    | `/api/label`              | Get photo label text                                         |
-| POST   | `/api/label`              | Set photo label text                                         |
-| GET    | `/api/qr-url`             | Get QR code URL                                              |
-| POST   | `/api/qr-url`             | Set QR code URL                                              |
-| GET    | `/api/ui-theme`           | Get active UI theme                                          |
-| POST   | `/api/ui-theme`           | Set UI theme                                                 |
-| GET    | `/api/date-filter`        | Get active date filter (`{"date":"YYYY-MM-DD"}` or null)     |
-| POST   | `/api/date-filter`        | Set date filter (`{"date":"YYYY-MM-DD"}` or `null`)          |
-| GET    | `/api/online-access`      | Get online access setting + R2 config status                 |
-| POST   | `/api/online-access`      | Enable/disable cloud upload (`{"enabled": true/false}`)      |
-| GET    | `/api/removal-mode`       | Get background removal mode + rembg availability             |
-| POST   | `/api/removal-mode`       | Set removal mode (`{"mode": "greenscreen" \| "ai"}`)         |
-| GET    | `/api/env`                | Read current `.env` values (all editable keys)               |
-| POST   | `/api/env`                | Write key/value pairs to `.env` and reload                   |
-| GET    | `/qr-image`               | Serve QR code as PNG (generated in memory)                   |
-| GET    | `/status`                 | JSON of the last capture result                              |
-| GET    | `/capabilities`           | JSON of available features (`{"rembg": true/false}`)         |
+| Method | Path                            | Description                                                      |
+|--------|---------------------------------|------------------------------------------------------------------|
+| GET    | `/video_feed`                   | MJPEG stream (multipart/x-mixed-replace)                         |
+| POST   | `/capture`                      | Trigger capture → theme → upload → QR; returns JSON              |
+| GET    | `/themes`                       | JSON list of available photo frame themes                        |
+| GET    | `/backgrounds`                  | JSON list of uploaded background images                          |
+| POST   | `/backgrounds/upload`           | Upload a new background image                                    |
+| DELETE | `/backgrounds/<id>`             | Delete a background image                                        |
+| GET    | `/backgrounds/<id>/color`       | Dominant colour of a background                                  |
+| GET    | `/photos/<path:filename>`       | Serve a locally-stored photo (used when online access is off)    |
+| GET    | `/api/photos`                   | JSON array of photos; accepts `?event=` or `?date=` filter       |
+| GET    | `/api/events`                   | List all event records                                           |
+| POST   | `/api/events`                   | Create event `{name, date}` — activates immediately              |
+| POST   | `/api/events/<id>/activate`     | Set event as active (deactivates all others)                     |
+| POST   | `/api/events/deactivate`        | Deactivate all events (no active event)                          |
+| DELETE | `/api/events/<id>`              | Delete event (must be inactive first)                            |
+| GET    | `/api/event`                    | Get current decorative event type                                |
+| POST   | `/api/event`                    | Set decorative event type                                        |
+| GET    | `/api/label`                    | Get photo label text                                             |
+| POST   | `/api/label`                    | Set photo label text                                             |
+| GET    | `/api/qr-url`                   | Get QR code base URL                                             |
+| POST   | `/api/qr-url`                   | Set QR code base URL                                             |
+| GET    | `/api/ui-theme`                 | Get active UI theme                                              |
+| POST   | `/api/ui-theme`                 | Set UI theme                                                     |
+| GET    | `/api/date-filter`              | Get active date filter (`{"date":"YYYY-MM-DD"}` or null)         |
+| POST   | `/api/date-filter`              | Set date filter (`{"date":"YYYY-MM-DD"}` or `null`)              |
+| GET    | `/api/online-access`            | Get online access setting + R2 config status                     |
+| POST   | `/api/online-access`            | Enable/disable cloud upload (`{"enabled": true/false}`)          |
+| POST   | `/api/bulk-upload`              | Upload all local photos to R2                                    |
+| GET    | `/api/removal-mode`             | Get background removal mode + rembg availability                 |
+| POST   | `/api/removal-mode`             | Set removal mode (`{"mode": "greenscreen" \| "ai"}`)             |
+| GET    | `/api/env`                      | Read current `.env` values (all editable keys)                   |
+| POST   | `/api/env`                      | Write key/value pairs to `.env` and reload                       |
+| GET    | `/qr-image`                     | Serve QR code as PNG; encodes event link when event is active    |
+| GET    | `/status`                       | JSON of the last capture result                                  |
+| GET    | `/capabilities`                 | JSON of available features (`{"rembg": true/false}`)             |
 
 `/capture` accepts JSON body: `{ "theme": "classic", "background": "none" }`.
 Removal mode is read server-side from `removal_mode.json` — not sent by the client.
+
+`/api/photos` filter priority: `?event=` > `?date=` > server-side date filter.
 
 ## Environment Variables
 
@@ -125,15 +137,28 @@ uv run gunicorn "app:create_app()" --bind 0.0.0.0:5000 --workers 1 --threads 4
 2. **cv2.VideoCapture(0)** — USB webcam or laptop camera (development)
 3. **Synthetic test pattern** — rendered by Pillow (no hardware / CI)
 
+## Event Management
+
+Events associate photos with a named session and generate a private gallery link.
+
+- Events are stored in `templates/data/events.json` (array, newest first), synced to R2.
+- Only one event can be active at a time. Creating a new event deactivates the previous one.
+- Every photo captured while an event is active has its `event_id` stored in SQLite.
+- The share link for an event is `http://<host>/live-show?event=<id>`. Guests who open
+  that link see only photos tagged to that event — no cross-event leakage.
+- The post-capture QR and the live-show QR both encode the event link when an event is active.
+- If no QR URL base is configured in admin, `/qr-image` auto-uses `{request.url_root}live-show`.
+
 ## Online Access & Storage
 
 Toggled in admin under **Online Access**.
 
-- **Yes (enabled):** photos uploaded to R2 after capture; `photos.json` updated;
-  per-photo share QR generated. If the upload fails, the photo is saved locally
-  and the capture result includes an `upload_error` field.
+- **Yes (enabled):** photos uploaded to R2 after capture; `photos.json` updated.
+  QR target priority: event link (if active + QR URL set) > per-photo share URL > date link.
+  If the upload fails, the photo is saved locally and the result includes `upload_error`.
 - **No (disabled):** photos saved only to `templates/photos/YYYY-MM-DD/`; served
-  locally via `/photos/<path>`; QR still generated using the admin QR Code URL.
+  locally via `/photos/<path>`. Use the **Upload Local Photos to Cloud** button in
+  admin to bulk-push them to R2 later (`POST /api/bulk-upload`).
 
 ## Background Removal
 
@@ -161,10 +186,11 @@ Applied after capture, before upload, via Pillow compositing in `themes.py`.
 To add a theme: add a function in `themes.py`, register in `THEMES`, add button +
 CSS in `templates/index.html`.
 
-## Event Types
+## Decorative Event Types
 
-Selected in admin. Controls gallery/live-show background pattern, colour palette
-(`gallery.css` `body.event-*` overrides), and header emoji icon.
+Selected in admin under **Event Type**. Controls gallery/live-show background
+pattern, colour palette (`gallery.css` `body.event-*` overrides), and header emoji.
+Separate from event records — this is purely cosmetic.
 
 | Key              | Label           |
 |------------------|-----------------|
@@ -179,9 +205,9 @@ Selected in admin. Controls gallery/live-show background pattern, colour palette
 | `halloween`      | Halloween       |
 | `fourth_of_july` | 4th of July     |
 
-To add an event: add key to `_VALID_EVENTS` in `app.py`, add `body.event-<key>`
-block in `gallery.css`, add icon in `gallery.html` + `live-show.html`, add button
-+ swatch in `admin.html` / `admin.css`.
+To add: add key to `_VALID_EVENTS` in `app.py`, add `body.event-<key>` block in
+`gallery.css`, add icon in `gallery.html` + `live-show.html`, add button + swatch
+in `admin.html` / `admin.css`.
 
 ## UI Themes
 
@@ -203,22 +229,24 @@ All settings stored as JSON in `templates/data/` and synced to `data/<filename>`
 in R2 on every save. On startup the app restores all files from R2 so settings
 survive Pi reboots.
 
-| File                  | Contents                                              |
-|-----------------------|-------------------------------------------------------|
-| `event.json`          | `{ "event": "default" }`                              |
-| `label.json`          | `{ "text": "PHOTOBOOTH" }`                            |
-| `ui_theme.json`       | `{ "theme": "dark" }`                                 |
-| `qr_url.json`         | `{ "url": "" }`                                       |
-| `date_filter.json`    | `{ "date": "YYYY-MM-DD" }` or `{ "date": null }`      |
-| `online_access.json`  | `{ "enabled": true }`                                 |
-| `removal_mode.json`   | `{ "mode": "greenscreen" }`                           |
-| `photos.json`         | `["YYYY-MM-DD/photo_….jpg", …]` (newest first)        |
+| File                  | Contents                                                        |
+|-----------------------|-----------------------------------------------------------------|
+| `events.json`         | `[{id, name, date, active, created_at}, …]` (newest first)     |
+| `event.json`          | `{ "event": "default" }` — decorative event type               |
+| `label.json`          | `{ "text": "PHOTOBOOTH" }`                                      |
+| `ui_theme.json`       | `{ "theme": "dark" }`                                           |
+| `qr_url.json`         | `{ "url": "" }` — QR base URL                                   |
+| `date_filter.json`    | `{ "date": "YYYY-MM-DD" }` or `{ "date": null }`                |
+| `online_access.json`  | `{ "enabled": true }`                                           |
+| `removal_mode.json`   | `{ "mode": "greenscreen" }`                                     |
+| `photos.json`         | `["YYYY-MM-DD/photo_….jpg", …]` (newest first)                  |
 
 ## R2 Storage Layout
 
 ```
 <bucket>/
 ├── data/
+│   ├── events.json
 │   ├── event.json
 │   ├── label.json
 │   ├── ui_theme.json
@@ -226,7 +254,9 @@ survive Pi reboots.
 │   ├── date_filter.json
 │   ├── online_access.json
 │   ├── removal_mode.json
-│   └── photos.json
+│   ├── photos.json
+│   └── qr_codes/
+│       └── qr_event_<id>.png   ← one per event
 └── YYYY-MM-DD/
     └── photo_YYYYMMDD_HHMMSS.jpg
 ```
@@ -244,21 +274,24 @@ exactly within the viewport — no scrolling. Powered by `gallery.js`.
 - **Slots 1–5**: cycle through all photos in batches of 5, advancing every 15 s.
 - **QR code**: fixed bottom-right on large screens (≥ 768 px); fixed
   bottom-centre on mobile with padding reserved so the grid isn't hidden behind it.
-- **Date filter**: when set in admin, only photos from that date are shown.
+- **Event filter**: `?event=evt_abc123` in the URL restricts all photos to that event.
+  `gallery.js` reads `URL_EVENT` from `window.location.search` and passes it to
+  `/api/photos?event=`. When an active event exists the route auto-redirects.
 
 ## Admin Page (`/admin`)
 
 Settings sections in order:
 
-1. **Event Type** — sets gallery/live-show theme
-2. **Photo Label** — text stamped on captured photos
-3. **Background Removal** — Green Screen or AI Remove (persisted, applies to all captures)
-4. **QR Code URL** — URL encoded as QR on live-show; also used as fallback QR after local captures
-5. **Online Access** — Yes (upload to R2) or No (local only)
-6. **Date Filter** — restrict gallery + live-show to a specific day
-7. **UI Theme** — Dark / White / Luxury / Black Rose
-8. **Upload Images** — upload custom background images
-9. **Environment Configuration** — edit `.env` file from the browser
+1. **Events** — create named events, activate/stop, copy share links
+2. **Event Type** — decorative gallery/live-show colour theme and emoji
+3. **Photo Label** — text stamped on captured photos
+4. **Background Removal** — Green Screen or AI Remove (persisted, applies to all captures)
+5. **QR Code URL** — base URL appended with `?event=<id>` (or `?date=`) for the live-show QR
+6. **Online Access** — Yes (upload to R2) or No (local only); bulk-upload button when R2 configured
+7. **Date Filter** — restrict gallery + live-show to a specific day (overridden by event filter)
+8. **UI Theme** — Dark / White / Luxury / Black Rose
+9. **Upload Images** — upload custom background images
+10. **Environment Configuration** — edit `.env` file from the browser
 
 ## File Layout
 
@@ -269,7 +302,7 @@ photobooth/               ← repo root
 ├── themes.py             Pillow frame compositing
 ├── uploader.py           R2 upload, photos.json update, data file sync
 ├── qr_generator.py       QR PNG generation (file and in-memory)
-├── models.py             SQLAlchemy Photo model + init_db()
+├── models.py             SQLAlchemy Photo model (+ event_id column) + init_db()
 ├── backgrounds.py        Background image management + rembg wrapper
 ├── pyproject.toml        uv project — dependencies
 ├── .env                  Runtime secrets (gitignored)
@@ -280,18 +313,18 @@ photobooth/               ← repo root
 │   ├── gallery.html      Paginated photo gallery
 │   ├── live-show.html    Full-screen live display
 │   ├── photo.html        Single-photo detail view
-│   └── data/             Persisted settings JSON files
+│   └── data/             Persisted settings JSON files (incl. events.json)
 ├── static/
 │   ├── css/
 │   │   ├── main.css          Shared variables + header + UI themes
 │   │   ├── index.css         Main photobooth page styles
-│   │   ├── admin.css         Admin page styles
+│   │   ├── admin.css         Admin page styles (incl. event record rows)
 │   │   ├── gallery.css       Gallery styles + event theme overrides
 │   │   └── live-show.css     Full-screen layout + QR overlay
 │   ├── js/
 │   │   ├── index.js          Capture flow, background picker, countdown
-│   │   ├── admin.js          Settings save/load, background upload
-│   │   └── gallery.js        Live-show polling + slideshow logic
+│   │   ├── admin.js          Settings save/load, event management, background upload
+│   │   └── gallery.js        Live-show polling + slideshow logic (reads ?event= / ?date=)
 │   ├── backgrounds/          Uploaded background images
 │   └── qr_codes/             Generated QR PNGs (gitignored)
 └── photos/                   Captured JPEGs (gitignored, local-only mode)

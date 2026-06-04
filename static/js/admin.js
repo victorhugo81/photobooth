@@ -118,6 +118,7 @@ function toast(msg, type = 'success') {
 }
 
 loadBackgrounds();
+loadEvents();
 loadEvent();
 loadLabel();
 loadQrUrl();
@@ -453,3 +454,100 @@ document.querySelectorAll('.event-btn').forEach(btn => {
     } catch (_) { toast('Network error', 'error'); }
   });
 });
+
+// ── Event record management ──────────────────────────────────────────
+
+async function loadEvents() {
+  try {
+    const resp = await fetch('/api/events');
+    const data = await resp.json();
+    renderEvents(data);
+  } catch (_) {}
+}
+
+function renderEvents(events) {
+  const list   = document.getElementById('events-list');
+  const status = document.getElementById('events-status');
+  if (!events.length) {
+    list.innerHTML = '<p class="label-hint" style="text-align:center">No events yet — create one above.</p>';
+    status.textContent = 'No active event';
+    return;
+  }
+  const active = events.find(e => e.active);
+  status.textContent = active ? `Active: ${active.name}` : 'No active event';
+  list.innerHTML = events.map(ev => `
+    <div class="event-record${ev.active ? ' event-record-active' : ''}" id="evrow-${ev.id}">
+      <div class="event-record-info">
+        <span class="event-record-name">${ev.name}</span>
+        <span class="event-record-date">${ev.date}</span>
+        ${ev.active ? '<span class="event-record-badge">Active</span>' : ''}
+      </div>
+      <div class="event-record-actions">
+        ${ev.active
+          ? `<button class="label-save-btn" onclick="deactivateEvents()">Stop</button>`
+          : `<button class="label-save-btn" onclick="activateEvent('${ev.id}')">Activate</button>`}
+        <button class="label-save-btn" onclick="copyEventLink('${ev.id}')">Copy Link</button>
+        ${!ev.active ? `<button class="btn-del" onclick="deleteEvent('${ev.id}')">✕</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('event-create-btn').addEventListener('click', async () => {
+  const name = document.getElementById('event-name-input').value.trim();
+  const date = document.getElementById('event-date-input').value;
+  if (!name) { toast('Enter an event name', 'error'); return; }
+  if (!date) { toast('Pick a date', 'error'); return; }
+  try {
+    const resp = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, date }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('event-name-input').value = '';
+      document.getElementById('event-date-input').value = '';
+      await loadEvents();
+      toast(`Created & activated: ${data.name}`, 'success');
+    } else {
+      toast(data.error || 'Failed to create event', 'error');
+    }
+  } catch (_) { toast('Network error', 'error'); }
+});
+
+async function activateEvent(id) {
+  try {
+    const resp = await fetch(`/api/events/${id}/activate`, { method: 'POST' });
+    const data = await resp.json();
+    if (resp.ok) { await loadEvents(); toast(`Active: ${data.name}`, 'success'); }
+    else toast(data.error || 'Failed to activate', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+}
+
+async function deactivateEvents() {
+  try {
+    const resp = await fetch('/api/events/deactivate', { method: 'POST' });
+    if (resp.ok) { await loadEvents(); toast('Event stopped — photos will not be tagged', 'success'); }
+    else toast('Failed to stop event', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event? Photos already tagged to it will remain but lose their event association.')) return;
+  try {
+    const resp = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    const data = await resp.json();
+    if (resp.ok) { await loadEvents(); toast('Event deleted', 'success'); }
+    else toast(data.error || 'Failed to delete', 'error');
+  } catch (_) { toast('Network error', 'error'); }
+}
+
+function copyEventLink(id) {
+  const link = `${window.location.origin}/live-show?event=${id}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(link).then(() => toast('Link copied!', 'success'));
+  } else {
+    prompt('Copy this link:', link);
+  }
+}

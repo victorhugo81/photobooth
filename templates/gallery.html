@@ -37,7 +37,7 @@
   <div class="film-line bottom"></div>
 
   <div class="header-actions">
-    <a href="/live-show">Live Show</a>
+    <a href="/live-show{% if event_id %}?event={{ event_id }}{% endif %}">Live Show</a>
     <a href="/">← Photobooth</a>
   </div>
 </header>
@@ -45,7 +45,7 @@
 <div class="container gallery-container pb-5">
 
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-    <span class="section-heading">Captured Photos{% if date_filter %} &mdash; {{ date_filter }}{% endif %}</span>
+    <span class="section-heading">Captured Photos{% if event_record %} &mdash; {{ event_record.name }}{% elif date_filter %} &mdash; {{ date_filter }}{% endif %}</span>
     <span id="photo-count">{{ total }} photo{{ 's' if total != 1 else '' }}</span>
   </div>
 
@@ -63,8 +63,9 @@
 
   {% if total_pages > 1 %}
   <nav class="gallery-pagination mt-5 mb-2">
+    {% set _pfx = ('event=' ~ event_id ~ '&') if event_id else '' %}
     {% if page > 1 %}
-    <a href="?page={{ page - 1 }}" class="page-btn">← Prev</a>
+    <a href="?{{ _pfx }}page={{ page - 1 }}" class="page-btn">← Prev</a>
     {% else %}
     <span class="page-btn disabled">← Prev</span>
     {% endif %}
@@ -72,7 +73,7 @@
     <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
 
     {% if page < total_pages %}
-    <a href="?page={{ page + 1 }}" class="page-btn">Next →</a>
+    <a href="?{{ _pfx }}page={{ page + 1 }}" class="page-btn">Next →</a>
     {% else %}
     <span class="page-btn disabled">Next →</span>
     {% endif %}

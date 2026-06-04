@@ -2,9 +2,11 @@ const POLL_MS  = 3000;   // how often to check for a new capture (slot 0)
 const SLIDE_MS = 15000;  // how often slots 1–5 cycle
 const FADE_MS  = 1200;   // fade duration — must match CSS transition
 
-// When the page is opened via a QR link (e.g. /live-show?date=2026-06-04)
-// restrict the gallery to photos from that date only.
-const URL_DATE = new URLSearchParams(window.location.search).get('date');
+// When the page is opened via a QR or share link the URL carries either
+// ?event=evt_abc123  (event record filter — preferred)
+// ?date=YYYY-MM-DD   (date filter — fallback)
+const URL_EVENT = new URLSearchParams(window.location.search).get('event');
+const URL_DATE  = new URLSearchParams(window.location.search).get('date');
 
 let allPhotos  = [];
 let cycleIndex = 0;   // start index for cycling slots 1–5
@@ -33,7 +35,9 @@ function setSlot(slotEl, photo, animate = false) {
 }
 
 async function fetchPhotos() {
-  const url = URL_DATE ? `/api/photos?date=${encodeURIComponent(URL_DATE)}` : '/api/photos';
+  let url = '/api/photos';
+  if (URL_EVENT)     url += `?event=${encodeURIComponent(URL_EVENT)}`;
+  else if (URL_DATE) url += `?date=${encodeURIComponent(URL_DATE)}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error('fetch failed');
   return resp.json();

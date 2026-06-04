@@ -12,6 +12,8 @@ from flask import Flask, Response, jsonify, redirect, render_template, request
 from werkzeug.utils import secure_filename
 
 from camera import Camera, mjpeg_generator
+import secrets
+
 from models import Photo, init_db
 from qr_generator import generate_qr, generate_qr_bytes
 from backgrounds import (
@@ -45,7 +47,7 @@ _VALID_EVENTS = {
 
 _VALID_UI_THEMES = {"dark", "white", "luxury", "black-rose"}
 
-_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json", "online_access.json", "removal_mode.json")
+_DATA_FILES = ("event.json", "label.json", "ui_theme.json", "qr_url.json", "photos.json", "date_filter.json", "online_access.json", "removal_mode.json", "events.json")
 
 
 def _data_dir(app: Flask) -> Path:
@@ -161,6 +163,27 @@ def _set_removal_mode(app: Flask, mode: str) -> None:
     _sync_to_r2("removal_mode.json", content)
 
 
+def _get_events(app: Flask) -> list[dict]:
+    try:
+        return json.loads((_data_dir(app) / "events.json").read_text())
+    except Exception:
+        return []
+
+
+def _save_events(app: Flask, events: list[dict]) -> None:
+    content = json.dumps(events, indent=2)
+    (_data_dir(app) / "events.json").write_text(content)
+    _sync_to_r2("events.json", content)
+
+
+def _get_active_event(app: Flask) -> dict | None:
+    return next((e for e in _get_events(app) if e.get("active")), None)
+
+
+def _new_event_id() -> str:
+    return "evt_" + secrets.token_urlsafe(6)
+
+
 def create_app() -> Flask:
     load_dotenv()
 
@@ -206,17 +229,28 @@ def create_app() -> Flask:
     @app.route("/gallery")
     def gallery():
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
-        event       = _get_event(app)
+        event_type  = _get_event(app)
         date_filter = _get_date_filter(app)
+        event_id    = request.args.get("event")
+        # Auto-apply active event when no filter is specified
+        if not event_id and not request.args.get("date"):
+            active = _get_active_event(app)
+            if active:
+                return redirect(f"/gallery?event={active['id']}")
         per_page    = 12
         page        = max(1, request.args.get("page", 1, type=int))
         try:
             img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
         except Exception:
             img_label = "PHOTOBOOTH"
+        event_record_dict = None
+        if event_id:
+            event_record_dict = next((e for e in _get_events(app) if e["id"] == event_id), None)
         with _Session() as session:
             q = session.query(Photo)
-            if date_filter:
+            if event_id and event_record_dict:
+                q = q.filter(Photo.event_id == event_id)
+            elif date_filter:
                 d     = datetime.date.fromisoformat(date_filter)
                 start = datetime.datetime(d.year, d.month, d.day)
                 end   = start + datetime.timedelta(days=1)
@@ -232,28 +266,38 @@ def create_app() -> Flask:
         return render_template("gallery.html",
                                photos=photos_data,
                                share_site_url=share_site_url,
-                               event=event,
+                               event=event_type,
                                img_label=img_label,
                                ui_theme=_get_ui_theme(app),
                                page=page,
                                total_pages=total_pages,
                                total=total,
-                               date_filter=date_filter)
+                               date_filter=date_filter,
+                               event_id=event_id,
+                               event_record=event_record_dict)
 
     @app.route("/live-show")
     def live_show():
         share_site_url = os.environ.get("SHARE_SITE_URL", "").rstrip("/")
         event = _get_event(app)
+        event_id = request.args.get("event")
+        # Auto-apply active event when no filter is specified
+        if not event_id and not request.args.get("date"):
+            active = _get_active_event(app)
+            if active:
+                return redirect(f"/live-show?event={active['id']}")
         try:
             img_label = json.loads((_data_dir(app) / "label.json").read_text()).get("text", "PHOTOBOOTH")
         except Exception:
             img_label = "PHOTOBOOTH"
+        show_qr = bool(_get_qr_url(app) or _get_active_event(app))
         return render_template("live-show.html",
                                share_site_url=share_site_url,
                                event=event,
+                               event_id=event_id,
                                img_label=img_label,
                                ui_theme=_get_ui_theme(app),
-                               qr_url=_get_qr_url(app))
+                               qr_url=show_qr)
 
     @app.route("/photos")
     def photos():
@@ -309,6 +353,69 @@ def create_app() -> Flask:
             return jsonify({"error": "Invalid event type"}), 400
         _set_event(app, event)
         return jsonify({"event": event})
+
+    # ── Event record management (stored in events.json) ─────────────── #
+
+    @app.route("/api/events", methods=["GET"])
+    def list_events():
+        return jsonify(_get_events(app))
+
+    @app.route("/api/events", methods=["POST"])
+    def create_event():
+        data = request.get_json(silent=True) or {}
+        name = data.get("name", "").strip()
+        date = data.get("date", "").strip()
+        if not name or len(name) > 200:
+            return jsonify({"error": "Name required (max 200 chars)"}), 400
+        if not date:
+            return jsonify({"error": "Date required"}), 400
+        try:
+            datetime.date.fromisoformat(date)
+        except ValueError:
+            return jsonify({"error": "Invalid date, expected YYYY-MM-DD"}), 400
+        events = _get_events(app)
+        for ev in events:
+            ev["active"] = False
+        new_ev = {
+            "id": _new_event_id(),
+            "name": name,
+            "date": date,
+            "active": True,
+            "created_at": datetime.datetime.utcnow().isoformat(),
+        }
+        events.insert(0, new_ev)
+        _save_events(app, events)
+        return jsonify(new_ev), 201
+
+    @app.route("/api/events/<event_id>/activate", methods=["POST"])
+    def activate_event(event_id):
+        events = _get_events(app)
+        target = next((e for e in events if e["id"] == event_id), None)
+        if not target:
+            return jsonify({"error": "Not found"}), 404
+        for ev in events:
+            ev["active"] = ev["id"] == event_id
+        _save_events(app, events)
+        return jsonify(target)
+
+    @app.route("/api/events/deactivate", methods=["POST"])
+    def deactivate_events():
+        events = _get_events(app)
+        for ev in events:
+            ev["active"] = False
+        _save_events(app, events)
+        return jsonify({"ok": True})
+
+    @app.route("/api/events/<event_id>", methods=["DELETE"])
+    def delete_event(event_id):
+        events = _get_events(app)
+        target = next((e for e in events if e["id"] == event_id), None)
+        if not target:
+            return jsonify({"error": "Not found"}), 404
+        if target.get("active"):
+            return jsonify({"error": "Deactivate the event before deleting it"}), 400
+        _save_events(app, [e for e in events if e["id"] != event_id])
+        return jsonify({"ok": True})
 
     @app.route("/video_feed")
     def video_feed():
@@ -399,24 +506,38 @@ def create_app() -> Flask:
 
     @app.route("/qr-image")
     def qr_image():
-        base = _get_qr_url(app)
-        if not base:
-            return "", 204
-        date = _get_date_filter(app) or datetime.date.today().isoformat()
-        sep = "&" if "?" in base else "?"
-        url = f"{base}{sep}date={date}"
-        buf = generate_qr_bytes(url)
-        png = buf.getvalue()
+        active_ev_dict = _get_active_event(app)
 
-        # Persist one QR PNG per date to data/qr_codes/
-        qr_path = _data_dir(app) / "qr_codes" / f"qr_{date}.png"
-        if not qr_path.exists():
+        if active_ev_dict:
+            # Use admin-configured base URL, or auto-use this server's /live-show
+            base = _get_qr_url(app) or request.url_root.rstrip("/") + "/live-show"
+            sep  = "&" if "?" in base else "?"
+            url  = f"{base}{sep}event={active_ev_dict['id']}"
+            # Always regenerate event QRs (base URL may have changed)
+            png  = generate_qr_bytes(url).getvalue()
             try:
+                qr_path = _data_dir(app) / "qr_codes" / f"qr_event_{active_ev_dict['id']}.png"
                 qr_path.write_bytes(png)
                 if os.environ.get("R2_ACCOUNT_ID"):
-                    upload_bytes_to_r2(f"data/qr_codes/qr_{date}.png", png, "image/png")
+                    upload_bytes_to_r2(f"data/qr_codes/qr_event_{active_ev_dict['id']}.png", png, "image/png")
             except Exception:
-                logger.warning("Failed to save date QR image", exc_info=True)
+                logger.warning("Failed to save event QR image", exc_info=True)
+        else:
+            base = _get_qr_url(app)
+            if not base:
+                return "", 204
+            sep  = "&" if "?" in base else "?"
+            date = _get_date_filter(app) or datetime.date.today().isoformat()
+            url  = f"{base}{sep}date={date}"
+            png  = generate_qr_bytes(url).getvalue()
+            qr_path = _data_dir(app) / "qr_codes" / f"qr_{date}.png"
+            if not qr_path.exists():
+                try:
+                    qr_path.write_bytes(png)
+                    if os.environ.get("R2_ACCOUNT_ID"):
+                        upload_bytes_to_r2(f"data/qr_codes/qr_{date}.png", png, "image/png")
+                except Exception:
+                    logger.warning("Failed to save date QR image", exc_info=True)
 
         return Response(png, mimetype="image/png",
                         headers={"Cache-Control": "no-store"})
@@ -539,11 +660,15 @@ def create_app() -> Flask:
 
     @app.route("/api/photos")
     def api_photos():
-        # URL param (?date=YYYY-MM-DD) takes precedence over server-side filter
-        date_filter = request.args.get("date") or _get_date_filter(app)
+        event_id  = request.args.get("event")
+        date_param = request.args.get("date")
+        # event_id > date param > server-side date filter
+        date_filter = None if event_id else (date_param or _get_date_filter(app))
         with _Session() as session:
             q = session.query(Photo)
-            if date_filter:
+            if event_id:
+                q = q.filter(Photo.event_id == event_id)
+            elif date_filter:
                 d     = datetime.date.fromisoformat(date_filter)
                 start = datetime.datetime(d.year, d.month, d.day)
                 end   = start + datetime.timedelta(days=1)
@@ -601,6 +726,10 @@ def _run_capture(
         removal_mode = "greenscreen"
         logger.warning("AI removal requested but rembg unavailable; falling back to green screen")
 
+    # Resolve active event before capture
+    active_ev = _get_active_event(app)
+    active_event_id: str | None = active_ev["id"] if active_ev else None
+
     now = datetime.datetime.utcnow()
     date_dir  = now.strftime('%Y-%m-%d')
     filename  = f"photo_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
@@ -652,17 +781,20 @@ def _run_capture(
     share_url = ""
     qr_url_path = ""
     if online_access and not upload_error and share_site_url:
-        # Online mode: per-photo share URL
         share_url = f"{share_site_url}/?f={r2_key}"
+
+    # Priority: event link > per-photo share > date fallback
+    qr_base = _get_qr_url(app)
+    if active_event_id and qr_base:
+        sep = "&" if "?" in qr_base else "?"
+        qr_target = f"{qr_base}{sep}event={active_event_id}"
+    elif share_url:
         qr_target = share_url
+    elif qr_base:
+        sep = "&" if "?" in qr_base else "?"
+        qr_target = f"{qr_base}{sep}date={date_dir}"
     else:
-        # Local-only or upload failed: use admin QR URL with today's date
-        qr_base = _get_qr_url(app)
-        if qr_base:
-            sep = "&" if "?" in qr_base else "?"
-            qr_target = f"{qr_base}{sep}date={date_dir}"
-        else:
-            qr_target = ""
+        qr_target = ""
     if qr_target:
         qr_path = Path(app.root_path) / "static" / "qr_codes" / qr_filename
         generate_qr(qr_target, str(qr_path))
@@ -670,7 +802,7 @@ def _run_capture(
 
     # 6. Persist to SQLite
     with _Session() as session:
-        session.add(Photo(filename=r2_key, r2_url=r2_url, timestamp=now))
+        session.add(Photo(filename=r2_key, r2_url=r2_url, timestamp=now, event_id=active_event_id))
         session.commit()
 
     result = {

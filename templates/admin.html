@@ -30,6 +30,23 @@
 
 <div class="container admin-container pb-5">
 
+  <!-- Event Management -->
+  <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+    <span class="section-heading"><strong>Events</strong></span>
+    <span id="events-status" class="section-status"></span>
+  </div>
+  <div class="label-editor mb-2">
+    <input id="event-name-input" type="text" maxlength="100" placeholder="Event name (e.g. Smith Wedding)" class="label-input">
+  </div>
+  <div class="label-editor">
+    <input id="event-date-input" type="date" class="label-input">
+    <button id="event-create-btn" class="label-save-btn">+ Create</button>
+  </div>
+  <p class="label-hint">Creating an event activates it — photos taken while it is active are tagged to it. Share the event link so guests see only their photos.</p>
+  <div id="events-list" class="mt-3"></div>
+
+  <hr class="section-divider">
+
   <!-- Event selector -->
   <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
     <span class="section-heading"><strong>Event Type</strong></span>
@@ -116,7 +133,7 @@
     <input id="qr-url-input" type="url" maxlength="512" placeholder="https://…" class="label-input">
     <button id="qr-url-save-btn" class="label-save-btn">Save</button>
   </div>
-  <p class="label-hint">Set this to your Live Show URL (e.g. <code>http://192.168.1.x:5000/live-show</code>). Today's date is appended automatically — guests who scan the QR see only photos from that day. Leave blank to hide the QR.</p>
+  <p class="label-hint">Set this to your Live Show URL (e.g. <code>http://192.168.1.x:5000/live-show</code>). When an event is active the event link is appended; otherwise today's date is used. Leave blank to hide the QR.</p>
 
   <hr class="section-divider">
 

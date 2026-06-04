@@ -313,6 +313,61 @@
   color: var(--muted);
 }
 
+/* ── Event record rows ── */
+.event-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--paper);
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.event-record-active { border-color: var(--accent); }
+.event-record-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+.event-record-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-record-date {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.73rem;
+  font-style: italic;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.event-record-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+.event-record-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 /* ── Count badge ── */
 #bg-count {
   font-family: 'Playfair Display', Georgia, serif;
