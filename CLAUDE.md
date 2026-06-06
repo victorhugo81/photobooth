@@ -121,9 +121,17 @@ Install them via apt before running:
 ```bash
 sudo apt install python3-picamera2 python3-gpiozero
 uv sync
+# Expose apt-installed packages to the uv venv (one-time; survives uv sync):
+echo "/usr/lib/python3/dist-packages" > .venv/lib/python3.13/site-packages/system-dist-packages.pth
 cp .env.example .env
 uv run flask --app app:create_app run --host 0.0.0.0 --port 5000
 ```
+
+> **Why the `.pth` file?** uv isolates its venv from system site-packages.
+> On Raspberry Pi OS, apt packages land in `/usr/lib/python3/dist-packages`
+> (not the standard `site-packages`), so even `--system-site-packages` doesn't
+> expose them. The `.pth` file adds that path permanently without being removed
+> by `uv sync`.
 
 For kiosk / autostart use gunicorn:
 
@@ -133,7 +141,9 @@ uv run gunicorn "app:create_app()" --bind 0.0.0.0:5000 --workers 1 --threads 4
 
 ## Camera Fallback Tiers
 
-1. **picamera2** — Pi camera module; stills via `switch_mode_and_capture_file`
+1. **picamera2** — Pi camera module; stills via `switch_mode_and_capture_file`.
+   Preview frames are captured as `RGB888` (which picamera2 stores as BGR in
+   memory) and flipped to RGB before being handed to Pillow.
 2. **cv2.VideoCapture(0)** — USB webcam or laptop camera (development)
 3. **Synthetic test pattern** — rendered by Pillow (no hardware / CI)
 

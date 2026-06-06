@@ -60,6 +60,8 @@ Open `http://localhost:5000` in your browser.
 ```bash
 sudo apt install python3-picamera2 python3-gpiozero
 uv sync
+# Expose apt-installed packages to the uv venv (one-time step):
+echo "/usr/lib/python3/dist-packages" > .venv/lib/python3.13/site-packages/system-dist-packages.pth
 cp .env.example .env
 uv run flask --app app:create_app run --host 0.0.0.0 --port 5000
 ```
@@ -164,7 +166,8 @@ on-screen button.
   all platforms. If the model weights aren't downloaded yet, the first AI capture
   will be slow while rembg fetches them.
 - `picamera2` and `gpiozero` are **system packages** — install via `apt` on Pi,
-  not via `uv`.
+  not via `uv`. After `uv sync`, add the one-liner `.pth` file described in the
+  Raspberry Pi setup above so the venv can import them.
 - Settings survive reboots: on startup the app pulls all `templates/data/*.json`
   files from R2 (when configured) so admin settings persist across redeployments.
 - Event records are stored in `templates/data/events.json` (synced to R2).

@@ -101,7 +101,7 @@ class Camera:
     def _capture_image(self) -> Image.Image:
         if self._picam is not None:
             arr = self._picam.capture_array()
-            return Image.fromarray(arr)
+            return Image.fromarray(arr[:, :, ::-1])  # BGR→RGB (picamera2 RGB888 is BGR in memory)
         if self._cap is not None:
             ret, frame = self._cap.read()
             if ret:

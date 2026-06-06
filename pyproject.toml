@@ -16,3 +16,6 @@ dependencies = [
 
 [tool.uv]
 package = false
+# picamera2 and gpiozero are installed via apt (system packages), not uv.
+# After `uv sync` on a Pi, expose them to the venv with:
+#   echo "/usr/lib/python3/dist-packages" > .venv/lib/python3.13/site-packages/system-dist-packages.pth
