@@ -3,6 +3,7 @@ const countdownEl     = document.getElementById('countdown-overlay');
 const countdownNum    = document.getElementById('countdown-number');
 const qrOverlay       = document.getElementById('qr-overlay');
 const qrImg           = document.getElementById('qr-img');
+const qrProcessing    = document.getElementById('qr-processing');
 const qrTimer         = document.getElementById('qr-timer');
 const qrCloseBtn      = document.getElementById('qr-close-btn');
 const loadingMsg      = document.getElementById('loading-msg');
@@ -63,7 +64,7 @@ async function startCapture() {
   }
   countdownEl.style.display = 'none';
 
-  loadingMsg.style.display = 'block';
+  showProcessing();
 
   try {
     const resp = await fetch('/capture', {
@@ -72,9 +73,9 @@ async function startCapture() {
       body: JSON.stringify({ background: selectedBackground }),
     });
     const data = await resp.json();
-    loadingMsg.style.display = 'none';
 
     if (!resp.ok) {
+      resetToPreview();
       showError(data.error || 'Capture failed — please try again.');
       return;
     }
@@ -85,9 +86,20 @@ async function startCapture() {
 
     showResult(data);
   } catch (err) {
-    loadingMsg.style.display = 'none';
+    resetToPreview();
     showError('Network error — please try again.');
   }
+}
+
+function showProcessing() {
+  const heading = document.getElementById('qr-overlay-heading');
+  heading.textContent = 'Scan to get your photo!';
+  qrImg.src = '/qr-image?t=' + Date.now();
+  qrImg.classList.remove('photo-mode');
+  qrProcessing.style.display = 'block';
+  qrTimer.style.display = 'none';
+  qrCloseBtn.style.display = 'none';
+  qrOverlay.style.display = 'flex';
 }
 
 function showResult(data) {
@@ -96,14 +108,17 @@ function showResult(data) {
     heading.textContent = 'Scan to get your photo!';
     qrImg.src = data.qr_url + '?t=' + Date.now();
     qrImg.classList.remove('photo-mode');
-  } else {
+  } else if (data.r2_url) {
     heading.textContent = 'Photo saved!';
     qrImg.src = data.r2_url + '?t=' + Date.now();
     qrImg.classList.add('photo-mode');
   }
-  qrOverlay.style.display = 'flex';
 
-  let remaining = 20;
+  qrProcessing.style.display = 'none';
+  qrTimer.style.display = 'block';
+  qrCloseBtn.style.display = 'inline-block';
+
+  let remaining = 10;
   qrTimer.textContent = `Returning in ${remaining}s…`;
 
   qrResetInterval = setInterval(() => {
@@ -118,7 +133,10 @@ function resetToPreview() {
   qrOverlay.style.display = 'none';
   qrImg.src = '';
   qrImg.classList.remove('photo-mode');
-  qrTimer.textContent = 'Returning in 20s…';
+  qrProcessing.style.display = 'none';
+  qrTimer.style.display = 'block';
+  qrTimer.textContent = 'Returning in 10s…';
+  qrCloseBtn.style.display = 'inline-block';
   captureBtn.disabled = false;
 }
 

@@ -217,6 +217,13 @@ body { display: flex; flex-direction: column; }
   width: auto;
   object-fit: contain;
 }
+#qr-processing {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
+}
 #qr-timer {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 0.9rem;

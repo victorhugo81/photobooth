@@ -62,7 +62,6 @@ sudo apt install python3-picamera2 python3-gpiozero
 uv sync
 # Expose apt-installed packages to the uv venv (one-time step):
 echo "/usr/lib/python3/dist-packages" > .venv/lib/python3.13/site-packages/system-dist-packages.pth
-cp .env.example .env
 uv run flask --app app:create_app run --host 0.0.0.0 --port 5000
 ```
 
