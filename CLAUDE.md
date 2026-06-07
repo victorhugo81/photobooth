@@ -116,16 +116,19 @@ uv run flask --app app:create_app run --host 0.0.0.0 --port 5000
 ### Raspberry Pi
 
 picamera2 and gpiozero are **not** in pyproject.toml (system libraries only).
-Install them via apt before running:
+Install them via apt, then run the setup script:
 
 ```bash
 sudo apt install python3-picamera2 python3-gpiozero
-uv sync
-# Expose apt-installed packages to the uv venv (one-time; survives uv sync):
-echo "/usr/lib/python3/dist-packages" > .venv/lib/python3.13/site-packages/system-dist-packages.pth
 cp .env.example .env
+./setup-pi.sh
 uv run flask --app app:create_app run --host 0.0.0.0 --port 5000
 ```
+
+`setup-pi.sh` runs `uv sync` and writes a `.pth` file that exposes
+`/usr/lib/python3/dist-packages` inside the venv (detects the Python version
+automatically, so it works across Pi OS releases). Re-run it after any `uv sync`
+that wipes the venv.
 
 > **Why the `.pth` file?** uv isolates its venv from system site-packages.
 > On Raspberry Pi OS, apt packages land in `/usr/lib/python3/dist-packages`
